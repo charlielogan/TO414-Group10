@@ -5,7 +5,7 @@ date: "2/10/2021"
 output: html_document
 ---
 
-Charlie Logan, Al Shumyatcher, Hecong Wang, Jihan Khandaker
+Charlie Logan, Jonathan Demeter, Ana Mohapatra, Nikita Mehendale, Srishti Senthil
  
 
 ```{r setup, include=FALSE}
@@ -14,8 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 hotels <- read.csv("hotel_bookings.csv")
-summary(hotels)
-
 ```
 
 ## Data Cleaning
@@ -24,7 +22,6 @@ hotels$arrival_date_year = as.factor(hotels$arrival_date_year)
 hotels$arrival_date_month = as.factor(hotels$arrival_date_month)
 hotels$arrival_date_week_number = as.factor(hotels$arrival_date_week_number)
 hotels$arrival_date_day_of_month = as.factor(hotels$arrival_date_day_of_month)
-hotels$is_repeated_guest = as.factor(hotels$is_repeated_guest)
 hotels$company = as.factor(hotels$company)
 summary(hotels)
                           
@@ -50,12 +47,75 @@ canceledbychilden
 hotels$has_baby <- hotels$babies > 0
 (canceledbybaby<- aggregate(is_canceled ~ has_baby, data = hotels, mean))
 ```
+
+simple questions to answer: 
+1.) What country has the most amount of cancellation?
+2.) What month has the most amount of cancellations?
+3.) What market segments have the highest cancellations?
+4.) What market segment travels most in a given month?
+What day of the month has the most ...? 
+Does having children make cancellations more likely?
+Which hotel has the higher cancellation?
+Do deposits make it less likely for someone to cancel?
+Is staying a fewer numbers of days more likely to be canceled then staying a week?
+
+1.)
 ```{r}
-hist(hotels$stays_in_week_nights,xlim=c(0, 15), breaks = 50)
+hotel_bookings1 %>% group_by(country) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col()
+
 ```
 
+2.)
 ```{r}
-barplot(table(hotels$country))
-length(table(hotels$country))
+hotel_bookings1 %>% group_by(arrival_date_month) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = arrival_date_month, y = num_cancel, fill= num_cancel))+ geom_col()
 ```
+3.)
+```{r}
+hotel_bookings1 %>% group_by(market_segment) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col()
+```
+4.) What market segment travels most in a given month? *maybe look at percentage?
+```{r}
+hotel_bookings1 %>% group_by(market_segment) %>% count %>% print %>%
+          ggplot(aes(x = market_segment, y = n, fill= n))+ geom_col()
+```
+Is staying a fewer numbers of days more likely to be canceled then staying a week? *add in proportions
+```{r}
+hotel_bookings1 %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights) %>% 
+                    mutate(days_stayed = stays_in_weekend_nights + stays_in_week_nights,
+                           week_stay = ifelse(days_stayed >= 7, 1, 0)) %>%
+                    group_by(week_stay) %>% summarize(num_cancel = sum(is_canceled))
+
+
+hotel_bookings1 %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights) %>% 
+                    mutate(days_stayed = stays_in_weekend_nights + stays_in_week_nights,
+                           week_stay = ifelse(days_stayed >= 7, 1, 0)) %>%
+                    group_by(week_stay) %>% summarize(num_cancel = mean(is_canceled))
+```
+
+Are guests staying only during the week more likely to cancel than guest staying only during the weekend?
+*Does the data seem to have issues that we need to check?
+```{r}
+hotel_bookings1 %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights, reservation_status) %>%
+                    filter(stays_in_weekend_nights == 0) %>% head
+                    
+```
+Do deposits make it less likely for someone to cancel?
+```{r}
+hotel_bookings1 %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(num_cancel = sum(is_canceled))
+
+
+hotel_bookings1 %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% count
+
+hotel_bookings1 %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(num_cancel = mean(is_canceled))
+
+```
+
+Does having children make cancellations more likely? *note that there may be more cancellations in guests with no children due to guests with no children be larger in general.
+```{r}
+unique(hotel_bookings1$children)
+hotel_bookings1 %>% select(is_canceled, children) %>% na.omit(children) %>%
+                   mutate(has_child = ifelse(children != 0, 1, 0)) %>%
+                    group_by(has_child) %>% summarise(num_cancel = sum(is_canceled))
+```
+
 
