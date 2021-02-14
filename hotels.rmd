@@ -59,6 +59,24 @@ Which hotel has the higher cancellation?
 Do deposits make it less likely for someone to cancel?
 Is staying a fewer numbers of days more likely to be canceled then staying a week?
 
+```{r}
+library(tidyverse)
+hotel_bookings1 <- hotel_bookings %>% mutate(arrival_date_year = as.factor(arrival_date_year),
+                                             arrival_date_month = as.factor(arrival_date_month),
+                                             arrival_date_week_number = as.factor(arrival_date_week_number),
+                                             arrival_date_day_of_month = as.factor(arrival_date_day_of_month),
+                                             #stays_in_weekend_nights = as.factor(stays_in_weekend_nights),
+                                             adults = as.factor(adults),
+                                             #children = as.factor(children),
+                                             babies = as.factor(babies),
+                                             previous_cancellations = as.factor(previous_cancellations),
+                                             previous_bookings_not_canceled = as.factor(previous_bookings_not_canceled),
+                                             booking_changes = as.factor(booking_changes),
+                                             required_car_parking_spaces = as.factor(required_car_parking_spaces),
+                                             total_of_special_requests = as.factor(total_of_special_requests))
+```
+
+
 1.)
 ```{r}
 hotel_bookings1 %>% group_by(country) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col()
