@@ -1,0 +1,61 @@
+---
+title: "hotels"
+author: "Charlie Logan"
+date: "2/10/2021"
+output: html_document
+---
+
+Charlie Logan, Al Shumyatcher, Hecong Wang, Jihan Khandaker
+ 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hotels <- read.csv("hotel_bookings.csv")
+summary(hotels)
+
+```
+
+## Data Cleaning
+```{r}
+hotels$arrival_date_year = as.factor(hotels$arrival_date_year)
+hotels$arrival_date_month = as.factor(hotels$arrival_date_month)
+hotels$arrival_date_week_number = as.factor(hotels$arrival_date_week_number)
+hotels$arrival_date_day_of_month = as.factor(hotels$arrival_date_day_of_month)
+hotels$is_repeated_guest = as.factor(hotels$is_repeated_guest)
+hotels$company = as.factor(hotels$company)
+summary(hotels)
+                          
+```
+## Data exploration
+```{r}
+barplot(sort(table(hotels$arrival_date_month)), las=2)
+```
+January is the least common month, August the most
+
+```{r}
+hotels$hotel <- as.factor(hotels$hotel)
+canceledbyhotel <- tapply(hotels$is_canceled, hotels$hotel, mean, na.rm=TRUE)
+canceledbyhotel
+```
+City hotel has a higher cancellation rate
+```{r}
+hotels$has_children <- hotels$children > 0 | hotels$babies > 0
+canceledbychilden <- aggregate(is_canceled ~ has_children, data = hotels, mean)
+canceledbychilden
+```
+```{r}
+hotels$has_baby <- hotels$babies > 0
+(canceledbybaby<- aggregate(is_canceled ~ has_baby, data = hotels, mean))
+```
+```{r}
+hist(hotels$stays_in_week_nights,xlim=c(0, 15), breaks = 50)
+```
+
+```{r}
+barplot(table(hotels$country))
+length(table(hotels$country))
+```
+
