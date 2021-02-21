@@ -12,14 +12,13 @@ fig_caption: true
 --
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## Table of Contents
 
 ## Introduction
 
-## Data Cleaning
 ```{r echo=FALSE}
 hotels_bookings <- read.csv("hotel_bookings.csv")
 ```
@@ -48,18 +47,19 @@ mean(hotels_bookings$days_in_waiting_list)
 
 ### Arrivals by Month
 
-In the following chunk "arrive", we generate a frequency distribution to display # arrivals by Month.
+In the following chunk we generate a frequency distribution to display the proportion of total bookings per month based on arrival date.
 
 ```{r arrive, echo=FALSE}
 #Create a frequency table with 12 rows: month names; # arrivals. Then plot.
 barplot(sort(prop.table(table(hotels_bookings$arrival_date_month))), main="Proportion of Arrivals by Month", ylab="Percentage of Total Arrivals",las=2, cex.names=0.7, col = "darkolivegreen", border = "darkslategray",)
 
 ```
+
 From the above plot, it is clear that guests book the greatest number of stays arriving during the peak summer months of July and August.
-Guests book the fewest number of stays to arrive during the winter months of January and December. Hotels may consider events or promotions to promote bookings during these slower months.
+Guests book the fewest number of stays to arrive during the winter months of January and December. Hotels may consider events or promotions to promote bookings during these slower months. Hotels could also lower their prices or cut down on operational costs during those months to maximize profit.
 
 ### Arrivals by Week
-In the following chunk "arr_by_wk" we plot how many bookings arrive each week as a bar chart, with colors transitioning by month. 
+In the following chunk we plot how many bookings arrive each week as a bar chart. 
 ```{r arr_by_wk, echo=FALSE}
 #As line graph:
 weekly_arrivals <- as.data.frame(table(hotels_bookings$arrival_date_week_number, dnn = list("Week Number")), responseName = "Frequency of Arrivals")
@@ -77,8 +77,7 @@ bg <- ggplot(data.frame(hotels_bookings$arrival_date_week_number), aes(x=hotels_
               guides(fill=guide_legend(title="Arrival Month"))
 ```
 
-This barchart combines the data we have already seen to follow arrivals frequency over time.
-******Identify some peak vs dog weeks. The hotel may investigate these patterns to prepare accordingly. Ex. May need to hire tem workers, supplies, parking overflow, logisitical cosiderations
+This barchart combines the data we have already seen to follow arrivals frequency over time. The arrivals by week gives a closer look at popular weeks for people to book reservations. The hotel may investigate these patterns to prepare accordingly. This could be purchasing supplies according to expected volume.
 
 ### Peak, Normal, and Slow Weeks
 In the following chunk "season" we assign "Peak", "Normal", and "Slow" levels to a new column in the weekly_arrivals data based on the frequency of arrivals in that week number.
@@ -103,7 +102,7 @@ nlevels(weekly_arrivals$season)  #verify that season has 3 levels
 ```
 We have now grouped the by-week arrivals data into "season" labels.
 
-### Regression Models for Arrivals Frequency
+### Regression Models for Arrivals Frequency  
 
 ```{r lin, echo=FALSE}
 lm1 <- lm( Frequency.of.Arrivals ~ season,data=weekly_arrivals)
@@ -138,12 +137,12 @@ It appears corporate distribution channel pays the least while the direct distri
 Does paying a deposit have an effect on how much a customer pays?
 ```{r, echo=FALSE}
 depo <- tapply(hotels_bookings$priceperstay, hotels_bookings$deposit_type, mean, na.rm = TRUE)
-sort(barplot(depo))
+barplot(sort(depo), col=rgb(0, .1, .7), main="Average Price paid Vs. Deposit Type", xlab="Deposit Type", ylab="Price Paid")
 ```
 
-We can see that the highest price is charged when there is no deposit. 
+We can see that the highest price is charged when there is no deposit and the lowest price is paid when the deposit was Non Refundable.
 
-We wish to explore whether higher prices are charged in peak seasons.
+Now we wish to explore whether higher prices are charged in peak seasons.
 In the following chunk we will first look at the ADR distribution to check for outliers and prepare the data for analysis.
 ```{r adr, echo=FALSE}
 adr_week <- ggplot(data=hotels_bookings, aes(x=arrival_date_week_number, y=adr))
@@ -151,7 +150,7 @@ adr_week + geom_point() +
               labs(title="Average Daily Rate by Week", 
               x="Week Number", y = "ADR (in USD)")    #Note the one crazy ADR outlier around week 13 or so! Got charged $$$
 
-boxplot(hotels_bookings$adr, horizontal = T, col = "darkseagreen1", xlab = "Average Daily Rate (in USD)")   # Can see that outlier where ADR >$5K
+# boxplot(hotels_bookings$adr, horizontal = T, col = "darkseagreen1", xlab = "Average Daily Rate (in USD)")   # Can see that outlier where ADR >$5K
 hotels_bookings$adr_adj <- ifelse(hotels_bookings$adr<1000, hotels_bookings$adr, NA) # Set outlier to NA
 boxplot(hotels_bookings$adr_adj, horizontal = T, col = "darkseagreen2", xlab = "Average Daily Rate (in USD)")  # Verify that ADR outlier has been eliminated
 
@@ -159,7 +158,7 @@ boxplot(hotels_bookings$adr_adj, horizontal = T, col = "darkseagreen2", xlab = "
 ```
   
 
-In the next chunk "adr_boxplots", we will visualize the movement in this distribution by plotting vertical boxplots against week number.
+In the next chunk, we will visualize the movement in this distribution by plotting vertical boxplots of the average daily rate against week number.
 ```{r adr_boxplots, echo=FALSE}
 boxplot(adr_adj ~ arrival_date_week_number, data=hotels_bookings, main="Average Daily Rate throughout the Year", xlab="Week Index", ylab="Average Daily Rate in USD (ADR)" )
 ```
@@ -224,7 +223,7 @@ Which companies have the highest mean price per stay for City Hotel?
 ```{r echo=FALSE}
 h_city <- hotels_bookings[hotels_bookings$hotel == "City Hotel",]
 cityhotelprice <- tapply(h_city$priceperstay, h_city$company, mean, na.rm = TRUE)
-barplot(sort(cityhotelprice, decreasing = TRUE)[1:20])
+barplot(sort(cityhotelprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
 
 ```
 
@@ -233,19 +232,20 @@ Which companies have the highest mean price per stay for Resort Hotel?
 ```{r echo=FALSE}
 h_resort <- hotels_bookings[hotels_bookings$hotel == "Resort Hotel", ]
 resorthotelprice <- tapply(h_resort$priceperstay, h_resort$company, mean, na.rm = TRUE)
-barplot(sort(resorthotelprice, decreasing = TRUE)[1:20])
+barplot(sort(resorthotelprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
 ```
+#So? elaborate
 
 Which companies have the highest number of bookings for City Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_city$company), decreasing = TRUE)[2:21])
+barplot(sort(table(h_city$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
 ```
 
 Which companies have the highest number of bookings for Resort Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_resort$company), decreasing = TRUE)[2:21])
+barplot(sort(table(h_resort$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
 ```
 
 Using the above data, City and Resort hotel can decide which companies to deepen their ties with based on the mean revenue and number of bookings they get from each company. 
@@ -255,25 +255,25 @@ Which agents have the highest mean price per stay for City Hotel?
 
 ```{r echo=FALSE}
 cityhotelagentprice <- tapply(h_city$priceperstay, h_city$agent, mean, na.rm = TRUE)
-barplot(sort(cityhotelagentprice, decreasing = TRUE)[1:20])
+barplot(sort(cityhotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
 ```
 
 Which agents have the highest mean price per stay for Resort Hotel?
 ```{r echo=FALSE}
 resorthotelagentprice <- tapply(h_resort$priceperstay, h_resort$agent, mean, na.rm = TRUE)
-barplot(sort(resorthotelagentprice, decreasing = TRUE)[1:20])
+barplot(sort(resorthotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
 ```
 
 Which agents have the highest number of bookings for City Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_city$agent), decreasing = TRUE)[2:21])
+barplot(sort(table(h_city$agent), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
 ```
 
 Which agents have the highest number of bookings for Resort Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_resort$agent), decreasing = TRUE)[2:21])
+barplot(sort(table(h_resort$agent), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
 ```
 
 Using the above data, the City and Resort hotel can decide which agents to deepen their ties with based on the mean revenue and number of bookings they get from each agent.
@@ -281,35 +281,40 @@ For example, Resort can choose to provide discounts to the top 10 agents in term
 
 
 ## Cancellations
+### Cancellation Rate for each Hotel
 Of the two hotels in our dataset, City Hotel and Resort Hotel, which has a higher average cancellation rate?
 ```{r echo=FALSE}
 hotels_bookings$hotel <- as.factor(hotels_bookings$hotel)
 canceledbyhotel <- round(tapply(hotels_bookings$is_canceled, hotels_bookings$hotel, mean, na.rm=TRUE),digits = 4)*100
 canceledbyhotel
 ```
-City hotel has a higher cancellation rate, where about 42% of reservations are canceled, while only about 28% are cancelled at Resort Hotel. 
+City hotel has a higher cancellation rate, about 42% of reservations are canceled, while only about 28% of bookings are cancelled at Resort Hotel. This is valuable base statistic to know how many people that booked a reservatin will actually end up staying at each hotel. This is valuable because if each hotel knows about how many people will be staying during a given period they can plan their supplies accordingly to maximize profit.
 
-
-We can compare the number of cancellations by people from each country on a graph:
+### Cancellations by Nationality
+We can compare the rate of cancellations by people from each country on a graph
 ```{r echo=FALSE}
-hotels_bookings %>% group_by(country) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col()
+hotels_bookings %>% group_by(country) %>% summarise(num_cancel = order(mean(is_canceled))) %>% head(10) %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col()
 
 ```
 
-We can see that August and July have the most amount of cancellations based on the graph below. But the months of June and April have the highest rates of cancellation. This difference can be explained because August and July have the most amount of reservations, so it would make sense they also have a high cancellation count.
+People from Portugal have
+
+### Cancellations by month
+
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(arrival_date_month) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = arrival_date_month, y = num_cancel, fill= num_cancel))+ geom_col()
 
 hotels_bookings %>% group_by(arrival_date_month) %>% summarise(mean_cancel = mean(is_canceled)) %>% arrange(desc(mean_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = arrival_date_month, y = mean_cancel, fill= mean_cancel))+ geom_col()
 
-barplot(sort(table(hotels_bookings$arrival_date_month)), las=2)
+barplot(sort(table(hotels_bookings$arrival_date_month)), las=2, col=rgb(0, .1, .6), xlab="Arrival Date", ylab="Number of Bookings", main="Number of Bookings meant to Arrive by Month")
 ```
+We can see that August and July have the most amount of cancellations based on the graph below. But the months of June and April have the highest rates of cancellation. This difference can be explained because August and July have the most amount of reservations, so it would make sense they also have a high cancellation count. J
 
 The market segment with the highest cancellation count is the online travel agency market segment. The highest cancellation rate however is the Groups segment (besides Undefined segment because there are only two instances of that which isnt substantial enough to make conclusions on)
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% print %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col()
 
-hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = mean(is_canceled)) %>% arrange(desc(num_cancel)) %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col()
+hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = mean(is_canceled)) %>% arrange(num_cancel) %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col()
 ```
 
 People book their hotel reservations primarily by online travel agencies
@@ -348,7 +353,6 @@ Do deposits make it less likely for someone to cancel? Strangely, 99% of Non Ref
 ```{r echo=FALSE}
 # QUESTION: All of (~99%) the non-refundable depoists cancelled their reservations (seems wrong)
 #hotels_bookings %>% select(is_canceled, deposit_type) %>% filter(deposit_type == "Non Refund")
-head(hotels_bookings)
 hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(num_cancel = sum(is_canceled))
 
 
