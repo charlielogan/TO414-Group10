@@ -281,74 +281,88 @@ For example, Resort can choose to provide discounts to the top 10 agents in term
 
 
 ## Cancellations
+
 ### Cancellation Rate for each Hotel
+
 Of the two hotels in our dataset, City Hotel and Resort Hotel, which has a higher average cancellation rate?
 ```{r echo=FALSE}
 hotels_bookings$hotel <- as.factor(hotels_bookings$hotel)
 canceledbyhotel <- round(tapply(hotels_bookings$is_canceled, hotels_bookings$hotel, mean, na.rm=TRUE),digits = 4)*100
 canceledbyhotel
 ```
-City hotel has a higher cancellation rate, about 42% of reservations are canceled, while only about 28% of bookings are cancelled at Resort Hotel. This is valuable base statistic to know how many people that booked a reservatin will actually end up staying at each hotel. This is valuable because if each hotel knows about how many people will be staying during a given period they can plan their supplies accordingly to maximize profit.
+City hotel has a higher cancellation rate, about 42% of reservations are canceled, while only about 28% of bookings are cancelled at Resort Hotel. This is a valuable base statistic to know how many people that booked a reservation will actually end up staying at each hotel. This is valuable because if each hotel knows about how many people will be staying during a given period they can plan their supplies accordingly to maximize profit.
 
 ### Cancellations by Nationality
-We can compare the rate of cancellations by people from each country on a graph
+We can compare the count and rate of cancellations by people from each country on the following graphs
 ```{r echo=FALSE}
-hotels_bookings %>% group_by(country) %>% summarise(num_cancel = order(mean(is_canceled))) %>% head(10) %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col()
+hotels_bookings %>% group_by(country) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Cancellation Count by Nationality")
+
+hotels_bookings %>% group_by(country) %>% summarise(mean_cancel = mean(is_canceled)) %>% filter(country == "PRT" | country == "GBR" | country == "ESP" | country == "FRA" | country == "ITA") %>% ggplot(aes(x = country, y = mean_cancel, fill= mean_cancel))+ geom_col() + labs(title="Cancellation Rate by Nationality")
 
 ```
 
-People from Portugal have
+People from Portugal have the highest cancellation count by far. The two hotels are probably located in Portugal and therefore most reservations are made by Portugese people. This explains the high cancellation count. Looking at the cancellation rate for the 5 nationalities with highest cancellation count shows that people from Portugal cancel their bookings at a much higher rate than those from Italy, Great Britain, France, and Spain. This makes intuitive sense because people traveling from further distances are less liekly to cancel than people from Portugal who are traveling domestically.
 
 ### Cancellations by month
 
 ```{r echo=FALSE}
-hotels_bookings %>% group_by(arrival_date_month) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = arrival_date_month, y = num_cancel, fill= num_cancel))+ geom_col()
+hotels_bookings %>% group_by(arrival_date_month) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% ggplot(aes(x = arrival_date_month, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Number of Cancellations per Month")
 
-hotels_bookings %>% group_by(arrival_date_month) %>% summarise(mean_cancel = mean(is_canceled)) %>% arrange(desc(mean_cancel)) %>% head(10) %>% print %>% ggplot(aes(x = arrival_date_month, y = mean_cancel, fill= mean_cancel))+ geom_col()
+hotels_bookings %>% group_by(arrival_date_month) %>% summarise(mean_cancel = mean(is_canceled)) %>% arrange(desc(mean_cancel)) %>% head(10) %>% ggplot(aes(x = arrival_date_month, y = mean_cancel, fill= mean_cancel))+ geom_col() + labs(title="Cancellation Rate per Month")
 
-barplot(sort(table(hotels_bookings$arrival_date_month)), las=2, col=rgb(0, .1, .6), xlab="Arrival Date", ylab="Number of Bookings", main="Number of Bookings meant to Arrive by Month")
+barplot(sort(table(hotels_bookings$arrival_date_month)), las=2, col=rgb(0, .1, .6), xlab="Arrival Date", ylab="Number of Bookings", main="Number of Bookings meant to Arrive each Month")
 ```
-We can see that August and July have the most amount of cancellations based on the graph below. But the months of June and April have the highest rates of cancellation. This difference can be explained because August and July have the most amount of reservations, so it would make sense they also have a high cancellation count. J
 
-The market segment with the highest cancellation count is the online travel agency market segment. The highest cancellation rate however is the Groups segment (besides Undefined segment because there are only two instances of that which isnt substantial enough to make conclusions on)
+We can see that August and July have the most amount of cancellations based on the graphs above. But the months of June and April have the highest rates of cancellation. This difference can be explained because August and July have the most amount of reservations, so it would make sense they also have a high cancellation count. This data can be combined with bookings per month to be used in trying to estimate actual volume of people in the hotels each month. This is valuable for figuring out the quanitity of resources and staff the hotels need each month.
+
+### Cancellations by Market Segment
+The market segment with the highest cancellation count is the online travel agency market segment. The highest cancellation rate however is the Groups segment (besides the Undefined segment because there are only two instances of that which isn't substantial enough to make conclusions on)
 ```{r echo=FALSE}
-hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% print %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col()
+hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% print %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Cancellation Count by Market Segment")
 
-hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = mean(is_canceled)) %>% arrange(num_cancel) %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col()
+hotels_bookings %>% group_by(market_segment) %>% summarise(mean_cancel = mean(is_canceled)) %>% arrange(mean_cancel) %>% ggplot(aes(x = market_segment, y = mean_cancel, fill= mean_cancel))+ geom_col() + labs(title="Cancellation Rate by Market Segment")
 ```
 
-People book their hotel reservations primarily by online travel agencies
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(market_segment) %>% count %>% print %>%
-          ggplot(aes(x = market_segment, y = n, fill= n))+ geom_col()
+          ggplot(aes(x = market_segment, y = n, fill= n))+ geom_col()+labs(title="Market Segment Bookings Count")
 ```
 
-Is staying a fewer numbers of days more likely to be canceled then staying a week? First we explore how cancellation is affected by duration of stay. By looking at the first graph it isnt so clear whether a longer stay is less likely to be canceled because of the high cancellation for 12 day bookings. When we break up the data into 7 days stays or not, we can see there is a slightly higher probability of a stay less than a week being cancelled.
+People book their hotel reservations primarily by online travel agencies and in result it has the highest cancellation count. This can be valuable to the hotels because they can either target customers further through travel agencies, or try to market on the lesser market segments such as the corporate sector.Interestingly, the groups segment has the highest cancellation rate. Maybe the hotels can market less toward this segment as they aren't reliable in showing up.
+
+### Cancellations by Duration of Stay
+Is staying a fewer numbers of days more likely to be canceled then staying a week? First we explore how cancellation is affected by duration of stay. 
+
 ```{r echo=FALSE}
 hotels_bookings %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights) %>% 
                     mutate(days_stayed = stays_in_weekend_nights + stays_in_week_nights) %>%
-                    group_by(days_stayed) %>% summarize(num_cancel = mean(is_canceled)) %>% print %>%
-                    head(15) %>% ggplot(aes(x = days_stayed, y = num_cancel, fill = num_cancel)) + geom_col()
+                    group_by(days_stayed) %>% summarize(cancel_rate = mean(is_canceled)) %>% 
+                    head(15) %>% ggplot(aes(x = days_stayed, y = cancel_rate, fill = cancel_rate)) + geom_col() +                         labs(title="Cancellation Count by Number of Days Stayed")
 
 
 hotels_bookings %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights) %>% 
                     mutate(days_stayed = stays_in_weekend_nights + stays_in_week_nights,
                            week_stay = ifelse(days_stayed >= 7, 1, 0)) %>%
-                    group_by(week_stay) %>% summarize(num_cancel = mean(is_canceled))
+                    group_by(week_stay) %>% summarize(cancel_rate = mean(is_canceled))
 ```
 
-Are guests staying only during the week more likely to cancel than guest staying only during the weekend? After filtering out the data to discern whether the reservation took place only during the week and not on the weekend, we an see that weekend only bookings were canceled at a significantly higher rate. 38% vs 27%, weekend vs weekday only respectively
+By looking at the first graph it isnt so clear whether a longer stay is less likely to be canceled because of the high cancellation for 12 day bookings. When we break up the data into 7 days stays or not, we can see there is a slightly higher probability of a stay less than a week being cancelled.
+
+Are guests staying only during the week more likely to cancel than guest staying only during the weekend?
 
 ```{r echo=FALSE}
 hotels_bookings %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights, reservation_status) %>%
                     filter(stays_in_week_nights != 0 | stays_in_weekend_nights != 0 ) %>% 
                     filter(stays_in_week_nights == 0 | stays_in_weekend_nights == 0) %>% 
                     mutate(weekDayOnly = ifelse(stays_in_weekend_nights == 0, 1, 0)) %>% group_by(weekDayOnly) %>%  
-										summarize(mean_cancel = mean(is_canceled))
+										summarize(Cancel_rate = mean(is_canceled))
                     
 ```
 
-Do deposits make it less likely for someone to cancel? Strangely, 99% of Non Refundable deposits ended up being canceled. This seems counter intuitive and a ridiculously high cancellation rate regardless of the context, especially because the count of Non REfundable deposits is ~14k which is very high. This leads me to believe this data is corrupted 
+After filtering out the data to discern whether the reservation took place only during the week and not on the weekend, we an see that weekend only bookings were canceled at a significantly higher rate. 38% against a 27% cancellation rate, weekend vs weekday trips respectively.
+
+### Cancellations by Deposit Type
+Do deposits make it less likely for someone to cancel?
 
 ```{r echo=FALSE}
 # QUESTION: All of (~99%) the non-refundable depoists cancelled their reservations (seems wrong)
@@ -358,8 +372,12 @@ hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type)
 
 hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% count
 
-hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(num_cancel = mean(is_canceled))
+hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(cancel_rate = mean(is_canceled))
 ```
+
+Strangely, 99% of Non Refundable deposits ended up being canceled. This seems counter intuitive and a ridiculously high cancellation rate regardless of the context, especially because the count of Non Refundable deposits is ~14k which is very high. This leads me to believe this data is corrupted or the Non Refund deposit type is only determined if a cancellation is happening. Regardless, the Non Refund deposit type doesn't seem informative. Bookings with no deposit cancel at a higher rate than refundable deposits however, a rate of 28.4% Vs. 22.2%.
+
+### Cancellations based on Group Composition
 
 Are groups booking with children more or less likely to cancel their reservation? The table below indicates that groups with children and without children cancel reservations at about the same rate, at about 37% for parties without children and about 34% for those with children. 
 ```{r echo=FALSE}
@@ -379,6 +397,7 @@ Those with one or more babies in their party but no children are much less likel
 
 In addition to information about who is in a given party, hotels save information about guests previous cancelation behavior. Is a guest that has cancelled a reservation in the past more likely to cancel again? The table velow indicates that a guest who canceled a reservation previously is highly likely to cancel again, showing a cancelation rate of about 91% for prior cancellers and a below average rate of about 34% for guests who have no record of previous cancelation. 
 
+### Cancellations based on Previous Instance of Cancellations
 ```{r echo=FALSE}
 hotels_bookings$has_previous_cancellation <- hotels_bookings$previous_cancellation != 0
 (repeat_cancel<- aggregate(is_canceled ~ has_previous_cancellation, data = hotels_bookings, mean))
@@ -405,6 +424,8 @@ ggplot(d, aes(x=combos, y=is_canceled, fill=combos)) +  geom_bar(stat = "identit
 ```
 
 We can see that just as it is higher overall, City Hotel's cancelation rate is higher than that of Resort Hotel regardless of whether or not the guest had previously canceled a reservation. Guests with track records of cancelation has no significant difference between the hotels, both should be aware of the high likelihood of those guests canceling again.
+
+### Cancellations based on Lead Time
 
 Another potential tool a hotel could use to anticipate whether a guest will follow through with their reservation is how far in advance the reservation was booked. If we break up every reservation into bins of less than a week in advance, between 1 week and 1 month, 1 and 2 months, 2 and 4 months, 4 and 6 months, 6 to 8 months, and 8+ months in advance, we get bins with at least 10,000 reservations in each category to look into which has the highest cancelation rate.  
 ```{r echo=FALSE}
