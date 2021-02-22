@@ -219,66 +219,89 @@ On average across both hotels, \$87 is charged nightly during normal season, \$1
 
 ## Companies and Agents
 
+### Companies' Mean Price Per Stay
+
+
 Which companies have the highest mean price per stay for City Hotel?
 ```{r echo=FALSE}
 h_city <- hotels_bookings[hotels_bookings$hotel == "City Hotel",]
 cityhotelprice <- tapply(h_city$priceperstay, h_city$company, mean, na.rm = TRUE)
-barplot(sort(cityhotelprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
+barplot(sort(cityhotelprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6), xlab = "Companies", ylab = "Mean price per stay", las = 2, cex.names = 0.8, main ="City Hotel")
 
 ```
+
+From the above graph, City Hotel can identify which companies have the highest mean price per stay. For example, City Hotel can see that Company 368 generates the most reveue per stay. It is about twice the revenue generated per stay of the Company 358, which is the second highest. 
 
 Which companies have the highest mean price per stay for Resort Hotel?
 
 ```{r echo=FALSE}
 h_resort <- hotels_bookings[hotels_bookings$hotel == "Resort Hotel", ]
 resorthotelprice <- tapply(h_resort$priceperstay, h_resort$company, mean, na.rm = TRUE)
-barplot(sort(resorthotelprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
+barplot(sort(resorthotelprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6), xlab = "Companies", ylab = "Mean price per stay", las = 2, cex.names = 0.8, main = "Resort Hotel")
 ```
-#So? elaborate
+
+From the above graph, Resort Hotel can identify which companies have the highest mean price per stay. For example, Resort Hotel can see that Company 422 generates the most reveue per stay. 
+
+### Companies' Number Of Bookings
 
 Which companies have the highest number of bookings for City Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_city$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
+barplot(sort(table(h_city$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6), xlab = "Companies", ylab = "Number of bookings", las = 2, cex.names = 0.8, main ="City Hotel")
 ```
+
+From the above graph, City Hotel can identify which companies have the highest number of bookings. For example, City Hotel can see that Company 40 has the highest number of bookings at the hotel. It is approximately 4 times as much as the second highest company's (Company 67's) number of bookings. 
 
 Which companies have the highest number of bookings for Resort Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_resort$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
+barplot(sort(table(h_resort$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6), xlab = "Companies", ylab = "Number of bookings", las = 2, cex.names = 0.8, main = "Resort Hotel")
 ```
 
+From the above graph, Resort Hotel can identify which companies have the highest number of bookings. For example, Resort Hotel can see that Company 223 has the highest number of bookings at the hotel, which is much higher than the second most number of bookings. 
+
 Using the above data, City and Resort hotel can decide which companies to deepen their ties with based on the mean revenue and number of bookings they get from each company. 
-For example, City Hotel can choose to provide discounts to the top 10 companies' employees in order to encourage loyalty (and more bookings) from that company. 
+For example, City Hotel can choose to provide discounts to the top 10 companies in terms of bookings in order to encourage loyalty (and more bookings) from that company.
+
+### Agents' Mean Price Per Stay
 
 Which agents have the highest mean price per stay for City Hotel?
 
 ```{r echo=FALSE}
 cityhotelagentprice <- tapply(h_city$priceperstay, h_city$agent, mean, na.rm = TRUE)
-barplot(sort(cityhotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
+barplot(sort(cityhotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6), xlab = "Agents", ylab = "Highest mean price per stay", las = 2, cex.names = 0.8, main ="City Hotel")
 ```
+
+From the above graph, City Hotel can identify which agents have the highest mean price per stay. For example, City Hotel can see that Agent 93 generates the most reveue per stay. 
 
 Which agents have the highest mean price per stay for Resort Hotel?
 ```{r echo=FALSE}
 resorthotelagentprice <- tapply(h_resort$priceperstay, h_resort$agent, mean, na.rm = TRUE)
-barplot(sort(resorthotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6))
+barplot(sort(resorthotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6),  xlab = "Agents", ylab = "Highest mean price per stay", las = 2, cex.names = 0.8, main = "Resort Hotel")
 ```
+
+From the above graph, Resort Hotel can identify which agents have the highest mean price per stay. For example, Resort Hotel can see that Agent 433 generates the most revenue per stay. Agent 497, the second highest agent also has a similar mean price per stay.  
+
+### Agents' Number of Bookings
 
 Which agents have the highest number of bookings for City Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_city$agent), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
+barplot(sort(table(h_city$agent), decreasing = TRUE)[1:20], col=rgb(0, .1, .6), xlab = "Agents", ylab = "Number of bookings", las = 2, cex.names = 0.8, cex.lab = 0.8, main ="City Hotel")
 ```
+
+From the above graph, City Hotel can identify which agents have the highest number of bookings. For example, City Hotel can see that Agent 9 has the highest number of bookings at the hotel. It is more than 3 times as much as the second highest agent, Agent 1. 
 
 Which agents have the highest number of bookings for Resort Hotel?
 
 ```{r echo=FALSE}
-barplot(sort(table(h_resort$agent), decreasing = TRUE)[2:21], col=rgb(0, .1, .6))
+barplot(sort(table(h_resort$agent), decreasing = TRUE)[1:20], col=rgb(0, .1, .6), xlab = "Agents", ylab = "Number of bookings", las = 2, cex.names = 0.8,  cex.lab = 0.9, main = "Resort Hotel")
 ```
 
-Using the above data, the City and Resort hotel can decide which agents to deepen their ties with based on the mean revenue and number of bookings they get from each agent.
-For example, Resort can choose to provide discounts to the top 10 agents in terms of bookings in order to encourage loyalty from those agents. 
+From the above graph, Resort Hotel can identify which agents have the highest number of bookings. For example, Resort Hotel can see that Agent 240 has the highest number of bookings at the hotel. It is approximately 5 times as much as the second highest agent, Agent 250. 
 
+Using the above data, the City and Resort hotel can decide which agents to deepen their ties with based on the mean revenue and number of bookings they get from each agent.
+For example, Resort Hotel can choose to provide discounts to the top 5 agents in terms of bookings in order to encourage loyalty from those agents. 
 
 ## Cancellations
 
@@ -296,9 +319,7 @@ City hotel has a higher cancellation rate, about 42% of reservations are cancele
 We can compare the count and rate of cancellations by people from each country on the following graphs
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(country) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% ggplot(aes(x = country, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Cancellation Count by Nationality")
-
 hotels_bookings %>% group_by(country) %>% summarise(mean_cancel = mean(is_canceled)) %>% filter(country == "PRT" | country == "GBR" | country == "ESP" | country == "FRA" | country == "ITA") %>% ggplot(aes(x = country, y = mean_cancel, fill= mean_cancel))+ geom_col() + labs(title="Cancellation Rate by Nationality")
-
 ```
 
 People from Portugal have the highest cancellation count by far. The two hotels are probably located in Portugal and therefore most reservations are made by Portugese people. This explains the high cancellation count. Looking at the cancellation rate for the 5 nationalities with highest cancellation count shows that people from Portugal cancel their bookings at a much higher rate than those from Italy, Great Britain, France, and Spain. This makes intuitive sense because people traveling from further distances are less liekly to cancel than people from Portugal who are traveling domestically.
@@ -307,9 +328,7 @@ People from Portugal have the highest cancellation count by far. The two hotels 
 
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(arrival_date_month) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% ggplot(aes(x = arrival_date_month, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Number of Cancellations per Month")
-
 hotels_bookings %>% group_by(arrival_date_month) %>% summarise(mean_cancel = mean(is_canceled)) %>% arrange(desc(mean_cancel)) %>% head(10) %>% ggplot(aes(x = arrival_date_month, y = mean_cancel, fill= mean_cancel))+ geom_col() + labs(title="Cancellation Rate per Month")
-
 barplot(sort(table(hotels_bookings$arrival_date_month)), las=2, col=rgb(0, .1, .6), xlab="Arrival Date", ylab="Number of Bookings", main="Number of Bookings meant to Arrive each Month")
 ```
 
@@ -319,7 +338,6 @@ We can see that August and July have the most amount of cancellations based on t
 The market segment with the highest cancellation count is the online travel agency market segment. The highest cancellation rate however is the Groups segment (besides the Undefined segment because there are only two instances of that which isn't substantial enough to make conclusions on)
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(market_segment) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% print %>% ggplot(aes(x = market_segment, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Cancellation Count by Market Segment")
-
 hotels_bookings %>% group_by(market_segment) %>% summarise(mean_cancel = mean(is_canceled)) %>% arrange(mean_cancel) %>% ggplot(aes(x = market_segment, y = mean_cancel, fill= mean_cancel))+ geom_col() + labs(title="Cancellation Rate by Market Segment")
 ```
 
@@ -338,8 +356,6 @@ hotels_bookings %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_n
                     mutate(days_stayed = stays_in_weekend_nights + stays_in_week_nights) %>%
                     group_by(days_stayed) %>% summarize(cancel_rate = mean(is_canceled)) %>% 
                     head(15) %>% ggplot(aes(x = days_stayed, y = cancel_rate, fill = cancel_rate)) + geom_col() +                         labs(title="Cancellation Count by Number of Days Stayed")
-
-
 hotels_bookings %>% select(is_canceled, stays_in_weekend_nights, stays_in_week_nights) %>% 
                     mutate(days_stayed = stays_in_weekend_nights + stays_in_week_nights,
                            week_stay = ifelse(days_stayed >= 7, 1, 0)) %>%
@@ -368,10 +384,7 @@ Do deposits make it less likely for someone to cancel?
 # QUESTION: All of (~99%) the non-refundable depoists cancelled their reservations (seems wrong)
 #hotels_bookings %>% select(is_canceled, deposit_type) %>% filter(deposit_type == "Non Refund")
 hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(num_cancel = sum(is_canceled))
-
-
 hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% count
-
 hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type) %>% summarise(cancel_rate = mean(is_canceled))
 ```
 
@@ -437,7 +450,6 @@ hotels_bookings$lead_bin[hotels_bookings$lead_time < 120 & hotels_bookings$lead_
 hotels_bookings$lead_bin[hotels_bookings$lead_time < 180 & hotels_bookings$lead_time >= 120] <- "120-180 days"
 hotels_bookings$lead_bin[hotels_bookings$lead_time < 240 & hotels_bookings$lead_time >= 180] <- "180-240 days"
 hotels_bookings$lead_bin = factor(hotels_bookings$lead_bin, levels = c("<7 days", "7-30 days", "30-60 days","60-120 days","120-180 days","180-240 days", "240+ days"))
-
 ```
 
 The table below indicates that the more lead time with which a reservation was booked, the more likely the party is to cancel it.
@@ -451,11 +463,12 @@ The graph below shows the cancelation rate at each time interval of booking.
 p <- ggplot(data=hotels_bookings, aes(x=lead_bin, y = is_canceled, fill=lead_bin)) + stat_summary(fun = "mean", geom="bar")
 p + ggtitle("Plot Reservation Cancellation Rate by Lead Time") +
   xlab("Lead Time") + ylab("Cancellation Rate") + labs(fill = "Lead Time")
-
 ```
 
 The cancelation rate crosses the mean cancellation threshold of 37% for the first time in the 60-120 days range, or between 2 and 4 months before the hotel stay date. It continues to grow from there, where the cancelation rate for a reservation more than 8 months out is around 64%, more than double the rate of reservations booked within a month. This trend is likely due to the fact that guests will make plans far in advance knowing that things may change between booking and the actual stay. If there isn't a penalty for cancelation or there is an insignificant one, guests will continue to book far in advance even if they do not fully intend to follow through on the reservation. 
 
-#Conclusion
+# Conclusion
+
+The report analyzed pricing, cancelation, customer arrivals, company, and agent data to provide useful conclusions. Using this report, the hotels can assess their demand during certain time periods, cancellation behavior from different types of guests, pricing during different time periods, and more. 
 
 
