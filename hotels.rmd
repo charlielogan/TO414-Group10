@@ -23,7 +23,8 @@ knitr::opts_chunk$set(echo = FALSE)
 hotels_bookings <- read.csv("hotel_bookings.csv")
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+```{r load_pkgs, echo=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 theme_set(theme_minimal())
 library(dplyr)  #needed for dataset row/column functions
@@ -31,11 +32,18 @@ library(viridis)
 library(patchwork)
 library(hrbrthemes)
 library(methods)
+```
 
+## Basic Exploration
+
+
+```{r clean, echo=FALSE, message=FALSE, warning=FALSE}
+#Clean the Data
+hotels_bookings$is_canceled<-as.factor(hotels_bookings$is_canceled)
 hotels_bookings$arrival_date_year<-as.factor(hotels_bookings$arrival_date_year)
 hotels_bookings$arrival_date_month<-as.factor(hotels_bookings$arrival_date_month)
-hotels_bookingsarrival_date_day_of_month<-as.factor(hotels_bookings$arrival_date_day_of_month)
 hotels_bookings$is_repeated_guest<-as.factor(hotels_bookings$is_repeated_guest)
+hotels_bookings$is_canceled<-as.factor(hotels_bookings$is_canceled)
 ```
 ## Data exploration
 
