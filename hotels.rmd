@@ -60,16 +60,13 @@ library(hrbrthemes)
 library(methods)
 ```
 
-## Basic Exploration
 
 
 ```{r clean, echo=FALSE, message=FALSE, warning=FALSE}
 #Clean the Data
-hotels_bookings$is_canceled<-as.factor(hotels_bookings$is_canceled)
 hotels_bookings$arrival_date_year<-as.factor(hotels_bookings$arrival_date_year)
 hotels_bookings$arrival_date_month<-as.factor(hotels_bookings$arrival_date_month)
 hotels_bookings$is_repeated_guest<-as.factor(hotels_bookings$is_repeated_guest)
-hotels_bookings$is_canceled<-as.factor(hotels_bookings$is_canceled)
 ```
 
 ## Arrivals
