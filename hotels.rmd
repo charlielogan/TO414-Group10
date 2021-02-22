@@ -1,25 +1,51 @@
 ---
 title: "Hotel Booking Analysis"
-author: Charlie Logan, Jonathan Demeter, Ana Mohapatra, Nikita Mehendale, Srishti Senthil
-date: February 19, 2021
-output: 
-html_document:
+author: Ana Mohapatra, Charlie Logan, Jonathan Demeter, Nikita Mehendale, Srishti Senthil
+date: February 21, 2021
+output: html_document
 toc: true
 toc_depth: 2
 toc_float: true
 number_sections: true
 fig_caption: true
---
+---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## Table of Contents
+### 1. Introduction
+### 2. Arrivals
+#### i. Arrivals by Month
+#### ii. Arrivals by Week
+#### iii. Peak, Normal, and Slow Weeks
+#### iv. Regression Model for Arrivals Frequency  
+### 3. Pricing
+### 4. Companies and Agents
+#### i. Companies’ Mean Price Per Stay
+#### ii. Companies’ Number Of Bookings
+#### iii. Agents’ Mean Price Per Stay
+#### iv. Agents’ Number of Bookings
+### 5. Cancellations
+#### i. Cancellation Rate for each Hotel
+#### ii. Cancellations by Nationality
+#### iii. Cancellations by Month
+#### iv. Cancellations by Market Segment
+#### v. Cancellations by Duration of Stay
+#### vi. Cancellations by Deposit Type
+#### vii. Cancellations by Group Composition
+#### viii. Cancellations by Previous Instance of Cancellations
+#### iix.Cancellations by Lead Time
+### 6. Conclusion
 
 ## Introduction
 
+The hotel bookings dataset available via Kaggle contains nearly 120,000 unique hotel bookings over the course of three years at two businesses, City Hotel and Resort Hotel. In this report we will generate a series of insights related to guest arrivals, room pricing, organizational booking, and guest cancellation such that these hotels can improve their decision making when it comes to these areas. 
+
 ```{r echo=FALSE}
+
 hotels_bookings <- read.csv("hotel_bookings.csv")
 ```
 
@@ -37,21 +63,18 @@ hotels_bookings$arrival_date_month<-as.factor(hotels_bookings$arrival_date_month
 hotels_bookingsarrival_date_day_of_month<-as.factor(hotels_bookings$arrival_date_day_of_month)
 hotels_bookings$is_repeated_guest<-as.factor(hotels_bookings$is_repeated_guest)
 ```
-## Data exploration
 
-What is the average number of days in waiting list?
-```{r echo=FALSE}
-mean(hotels_bookings$days_in_waiting_list)
-```
 ## Arrivals
+
+Each reservation entry contains information about the day, month, week, and year of the guest's arrival. In this section we will take a look at trends of the busiest and quietest times of the year. 
 
 ### Arrivals by Month
 
-In the following chunk we generate a frequency distribution to display the proportion of total bookings per month based on arrival date.
+In the barplot pictured below, we generate a frequency distribution to display the proportion of total bookings per month based on arrival date.
 
 ```{r arrive, echo=FALSE}
 #Create a frequency table with 12 rows: month names; # arrivals. Then plot.
-barplot(sort(prop.table(table(hotels_bookings$arrival_date_month))), main="Proportion of Arrivals by Month", ylab="Percentage of Total Arrivals",las=2, cex.names=0.7, col = "darkolivegreen", border = "darkslategray",)
+barplot(sort(prop.table(table(hotels_bookings$arrival_date_month))), main="Proportion of Arrivals by Month", ylab="Percentage of Total Arrivals",las=2, cex.names=0.7, col = "navy", border = "darkslategray")
 
 ```
 
@@ -59,28 +82,24 @@ From the above plot, it is clear that guests book the greatest number of stays a
 Guests book the fewest number of stays to arrive during the winter months of January and December. Hotels may consider events or promotions to promote bookings during these slower months. Hotels could also lower their prices or cut down on operational costs during those months to maximize profit.
 
 ### Arrivals by Week
-In the following chunk we plot how many bookings arrive each week as a bar chart. 
-```{r arr_by_wk, echo=FALSE}
+We can break up our examination of arrival time to a more granular level, looking at guest arrival by week number, with week 1 being the first week of January and week 52 being the last week of December. This will allow us to gain more insight into the busiest times of the year beyond busy months. 
+
+```{r arr_by_wk, echo=FALSE, warning=FALSE}
 #As line graph:
 weekly_arrivals <- as.data.frame(table(hotels_bookings$arrival_date_week_number, dnn = list("Week Number")), responseName = "Frequency of Arrivals")
-
-lg <- ggplot(data=weekly_arrivals, aes(x=Week.Number, y=Frequency.of.Arrivals))+
-  geom_point(shape=18, color="blue") 
-
-
-
 bg <- ggplot(data.frame(hotels_bookings$arrival_date_week_number), aes(x=hotels_bookings$arrival_date_week_number, fill=factor(hotels_bookings$arrival_date_month, levels = month.name)) ) +
          geom_bar() +
           theme_ipsum() +
               labs(title="Arrivals Frequency by Week", 
               x="Week Number", y = "Arrivals (in Number of Bookings)")+ 
               guides(fill=guide_legend(title="Arrival Month"))
+bg
 ```
 
-This barchart combines the data we have already seen to follow arrivals frequency over time. The arrivals by week gives a closer look at popular weeks for people to book reservations. The hotel may investigate these patterns to prepare accordingly. This could be purchasing supplies according to expected volume.
+This barchart combines the data we have already seen to follow arrivals frequency over time. The arrivals by week gives a closer look at popular weeks for people to book reservations. The hotel may investigate these patterns to prepare for high and low seasons accordingly. This could include purchasing supplies according to expected volume, adjusting staffing on a given week, and setting prices according to demand.
 
 ### Peak, Normal, and Slow Weeks
-In the following chunk "season" we assign "Peak", "Normal", and "Slow" levels to a new column in the weekly_arrivals data based on the frequency of arrivals in that week number.
+We can also categorize different times of the year based on how busy they are. We chose to add "Peak", "Normal", and "Slow" labels to a new column in the weekly_arrivals data based on the frequency of arrivals in that week number.
 ```{r season, echo=FALSE}
 
 #define categorical variable to say whether week number falls during slow, normal, or peak season.
@@ -97,12 +116,13 @@ for( i in rownames(weekly_arrivals) ) {
   }
 }
 weekly_arrivals$season <- as.factor(weekly_arrivals$season)
-nlevels(weekly_arrivals$season)  #verify that season has 3 levels
+summary(weekly_arrivals$season)
 
 ```
-We have now grouped the by-week arrivals data into "season" labels.
+We have now grouped the by-week arrivals data into "season" labels, with 21 weeks of the year considered to be peak season, 25 weeks more typical without extreme swells in guest numbers, and 7 weeks which are significantly below typical guest intakes. 
 
-### Regression Models for Arrivals Frequency  
+### Regression Model for Arrivals Frequency  
+By generating a linear regression model based on season, we can gain further insight into what each season represents. 
 
 ```{r lin, echo=FALSE}
 lm1 <- lm( Frequency.of.Arrivals ~ season,data=weekly_arrivals)
@@ -118,6 +138,8 @@ The adjusted r-squared value indicates that season explains 78.6% of the varianc
 Arrivals is an interesting distribution which he have now visualized in several different plots and models. We will seek to compare this data to price information in the following section.
 
 ## Pricing
+By digging into the pricing tendencies, we can help the hotels better understand where they are properly meeting guest demand during high seasons and where they are not. 
+
 The average daily rate across all reservations in both hotels is as follows:
 ```{r adr_city_res, echo=FALSE}
 adr <- tapply(hotels_bookings$adr, hotels_bookings$hotel, mean, na.rm = TRUE)
@@ -142,23 +164,15 @@ barplot(sort(depo), col=rgb(0, .1, .7), main="Average Price paid Vs. Deposit Typ
 
 We can see that the highest price is charged when there is no deposit and the lowest price is paid when the deposit was Non Refundable.
 
-Now we wish to explore whether higher prices are charged in peak seasons.
-In the following chunk we will first look at the ADR distribution to check for outliers and prepare the data for analysis.
+
 ```{r adr, echo=FALSE}
-adr_week <- ggplot(data=hotels_bookings, aes(x=arrival_date_week_number, y=adr))
-adr_week + geom_point() +
-              labs(title="Average Daily Rate by Week", 
-              x="Week Number", y = "ADR (in USD)")    #Note the one crazy ADR outlier around week 13 or so! Got charged $$$
 
-# boxplot(hotels_bookings$adr, horizontal = T, col = "darkseagreen1", xlab = "Average Daily Rate (in USD)")   # Can see that outlier where ADR >$5K
 hotels_bookings$adr_adj <- ifelse(hotels_bookings$adr<1000, hotels_bookings$adr, NA) # Set outlier to NA
-boxplot(hotels_bookings$adr_adj, horizontal = T, col = "darkseagreen2", xlab = "Average Daily Rate (in USD)")  # Verify that ADR outlier has been eliminated
-
+#boxplot(hotels_bookings$adr_adj, horizontal = T, col = "darkseagreen2", xlab = "Average Daily Rate (in USD)")  # Verify that ADR outlier has been eliminated
 
 ```
-  
+We can visualize the changes in pricing by plotting vertical boxplots of the average daily rate against week number. The dots on the top and bottom at each weekly interval represent prices significantly above or below the median, while the lines inside the box represent the 1st quartile, median, and 3rd quartile of prices in a given week. 
 
-In the next chunk, we will visualize the movement in this distribution by plotting vertical boxplots of the average daily rate against week number.
 ```{r adr_boxplots, echo=FALSE}
 boxplot(adr_adj ~ arrival_date_week_number, data=hotels_bookings, main="Average Daily Rate throughout the Year", xlab="Week Index", ylab="Average Daily Rate in USD (ADR)" )
 ```
@@ -182,14 +196,15 @@ summary(weekly_arrivals$adr) # The spread of weekly average ADRs
 
 coeff <- 20
 adr_arr <- ggplot(weekly_arrivals, aes(x=Week.Number)) + 
-  geom_line(aes(y = adr), color = "darkred") +    # Mean of ADRs for bookings with arrival dat in that week
-  geom_line(aes(y = Frequency.of.Arrivals / coeff), color="steelblue", linetype="twodash") + # number of arrivals in that week
+  geom_line(aes(y = adr, group = 1), color = "darkred") +    # Mean of ADRs for bookings with arrival dat in that week
+  geom_line(aes(y = Frequency.of.Arrivals / coeff, group = 1), color="steelblue") + # number of arrivals in that week
   xlab('Week Index') +
 
   scale_y_continuous(                       #Custom y-scales
     name = "Mean of ADRs",
     sec.axis = sec_axis( trans=~.*coeff, name="Frequency of Arrivals")
   ) +
+  scale_x_discrete(breaks = c(4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52)) +
   theme_ipsum()+
     theme(
     axis.title.y = element_text(color = "darkred", size=13),
@@ -219,8 +234,9 @@ On average across both hotels, \$87 is charged nightly during normal season, \$1
 
 ## Companies and Agents
 
-### Companies' Mean Price Per Stay
+If we take a look at the companies that book at hotels for corporate travel or events and the agents that book rooms for guests, the hotels can better understand which corporate and agent relationships are most beneficial to them and potentially target more advertising or offer certain discounts accordingly. 
 
+### Companies' Mean Price Per Stay
 
 Which companies have the highest mean price per stay for City Hotel?
 ```{r echo=FALSE}
@@ -250,7 +266,7 @@ Which companies have the highest number of bookings for City Hotel?
 barplot(sort(table(h_city$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6), xlab = "Companies", ylab = "Number of bookings", las = 2, cex.names = 0.8, main ="City Hotel")
 ```
 
-From the above graph, City Hotel can identify which companies have the highest number of bookings. For example, City Hotel can see that Company 40 has the highest number of bookings at the hotel. It is approximately 4 times as much as the second highest company's (Company 67's) number of bookings. 
+City Hotel can use this to identify which companies have the highest number of bookings. For example, City Hotel can see that Company 40 has the highest number of bookings at the hotel. It is approximately 4 times as much as the second highest company's (Company 67's) number of bookings. 
 
 Which companies have the highest number of bookings for Resort Hotel?
 
@@ -258,10 +274,9 @@ Which companies have the highest number of bookings for Resort Hotel?
 barplot(sort(table(h_resort$company), decreasing = TRUE)[2:21], col=rgb(0, .1, .6), xlab = "Companies", ylab = "Number of bookings", las = 2, cex.names = 0.8, main = "Resort Hotel")
 ```
 
-From the above graph, Resort Hotel can identify which companies have the highest number of bookings. For example, Resort Hotel can see that Company 223 has the highest number of bookings at the hotel, which is much higher than the second most number of bookings. 
+Similarly, Resort Hotel can use this identify which companies have the highest number that Company 223 has the highest number of bookings at the hotel, which is much higher than the second most number of bookings. 
 
-Using the above data, City and Resort hotel can decide which companies to deepen their ties with based on the mean revenue and number of bookings they get from each company. 
-For example, City Hotel can choose to provide discounts to the top 10 companies in terms of bookings in order to encourage loyalty (and more bookings) from that company.
+Using the above data, City and Resort hotel can decide which companies to deepen their ties with based on the mean revenue and number of bookings they get from each company. For example, City Hotel can choose to provide discounts to the top 10 companies in terms of bookings in order to encourage loyalty (and more bookings) from that company.
 
 ### Agents' Mean Price Per Stay
 
@@ -272,7 +287,7 @@ cityhotelagentprice <- tapply(h_city$priceperstay, h_city$agent, mean, na.rm = T
 barplot(sort(cityhotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6), xlab = "Agents", ylab = "Highest mean price per stay", las = 2, cex.names = 0.8, main ="City Hotel")
 ```
 
-From the above graph, City Hotel can identify which agents have the highest mean price per stay. For example, City Hotel can see that Agent 93 generates the most reveue per stay. 
+Agent 93 generates the most reveue per stay on average for City Hotel by a fairly significant margin. This agent is clearly a very valuable asset for the hotel and they should be sure to do whatever they can to maintain that relationship to keep the business coming through them.  
 
 Which agents have the highest mean price per stay for Resort Hotel?
 ```{r echo=FALSE}
@@ -280,7 +295,7 @@ resorthotelagentprice <- tapply(h_resort$priceperstay, h_resort$agent, mean, na.
 barplot(sort(resorthotelagentprice, decreasing = TRUE)[1:20], col=rgb(0, .1, .6),  xlab = "Agents", ylab = "Highest mean price per stay", las = 2, cex.names = 0.8, main = "Resort Hotel")
 ```
 
-From the above graph, Resort Hotel can identify which agents have the highest mean price per stay. For example, Resort Hotel can see that Agent 433 generates the most revenue per stay. Agent 497, the second highest agent also has a similar mean price per stay.  
+For resort hotel, Agent 433 generates the most revenue per stay. Agent 497, the second highest agent also has a similar mean price per stay. These two agents, selling similarly high prices per stay, are valuable assets for the hotel. 
 
 ### Agents' Number of Bookings
 
@@ -324,7 +339,7 @@ hotels_bookings %>% group_by(country) %>% summarise(mean_cancel = mean(is_cancel
 
 People from Portugal have the highest cancellation count by far. The two hotels are probably located in Portugal and therefore most reservations are made by Portugese people. This explains the high cancellation count. Looking at the cancellation rate for the 5 nationalities with highest cancellation count shows that people from Portugal cancel their bookings at a much higher rate than those from Italy, Great Britain, France, and Spain. This makes intuitive sense because people traveling from further distances are less liekly to cancel than people from Portugal who are traveling domestically.
 
-### Cancellations by month
+### Cancellations by Month
 
 ```{r echo=FALSE}
 hotels_bookings %>% group_by(arrival_date_month) %>% summarise(num_cancel = sum(is_canceled)) %>% arrange(desc(num_cancel)) %>% head(10) %>% ggplot(aes(x = arrival_date_month, y = num_cancel, fill= num_cancel))+ geom_col() + labs(title="Number of Cancellations per Month")
@@ -390,7 +405,7 @@ hotels_bookings %>% select(is_canceled, deposit_type) %>% group_by(deposit_type)
 
 Strangely, 99% of Non Refundable deposits ended up being canceled. This seems counter intuitive and a ridiculously high cancellation rate regardless of the context, especially because the count of Non Refundable deposits is ~14k which is very high. This leads me to believe this data is corrupted or the Non Refund deposit type is only determined if a cancellation is happening. Regardless, the Non Refund deposit type doesn't seem informative. Bookings with no deposit cancel at a higher rate than refundable deposits however, a rate of 28.4% Vs. 22.2%.
 
-### Cancellations based on Group Composition
+### Cancellations by Group Composition
 
 Are groups booking with children more or less likely to cancel their reservation? The table below indicates that groups with children and without children cancel reservations at about the same rate, at about 37% for parties without children and about 34% for those with children. 
 ```{r echo=FALSE}
@@ -399,24 +414,24 @@ canceledbychilden <- aggregate(is_canceled ~ has_children, data = hotels_booking
 canceledbychilden
 ```
 
-Traveling with children indicates a group is slightly less likely to cancel their reservation, but does that pattern change if the guest is traveling with a baby and no older children? The table below shows the difference in cancelation rates between parties with more than one baby and parties with either no babies or other children. 
+Traveling with children indicates a group is slightly less likely to cancel their reservation, but does that pattern change if the guest is traveling with a baby and no older children? The table below shows the difference in cancellation rates between parties with more than one baby and parties with either no babies or other children. 
 ```{r echo=FALSE}
 hotels_bookings$has_baby <- hotels_bookings$babies > 0 & hotels_bookings$children == 0
 (canceledbybaby<- aggregate(is_canceled ~ has_baby, data = hotels_bookings, mean))
 ```
 
-Those with one or more babies in their party but no children are much less likely to cancel a reservation, at a cancelation rate of about 17% as compared to a party with just adults or adults and children canceling at a rate of about 37%. Young families with babies seem to be more reliable in their bookings, which is valuable information for a hotel to have when planning availabity and projecting which reservations are going to fall through. 
+Those with one or more babies in their party but no children are much less likely to cancel a reservation, at a cancellation rate of about 17% as compared to a party with just adults or adults and children canceling at a rate of about 37%. Young families with babies seem to be more reliable in their bookings, which is valuable information for a hotel to have when planning availabity and projecting which reservations are going to fall through. 
 
 
-In addition to information about who is in a given party, hotels save information about guests previous cancelation behavior. Is a guest that has cancelled a reservation in the past more likely to cancel again? The table velow indicates that a guest who canceled a reservation previously is highly likely to cancel again, showing a cancelation rate of about 91% for prior cancellers and a below average rate of about 34% for guests who have no record of previous cancelation. 
+In addition to information about who is in a given party, hotels save information about guests previous cancellation behavior. Is a guest that has cancelled a reservation in the past more likely to cancel again? The table velow indicates that a guest who canceled a reservation previously is highly likely to cancel again, showing a cancellation rate of about 91% for prior cancellers and a below average rate of about 34% for guests who have no record of previous cancellation. 
 
-### Cancellations based on Previous Instance of Cancellations
+### Cancellations by Previous Instance of Cancellations
 ```{r echo=FALSE}
 hotels_bookings$has_previous_cancellation <- hotels_bookings$previous_cancellation != 0
 (repeat_cancel<- aggregate(is_canceled ~ has_previous_cancellation, data = hotels_bookings, mean))
 ```
 
-The barplot pictured below shows the cancelation rate of these two groups. If hotels are concerned about cancelations and would like to improve their ability to predict which guests will not end up staying at the hotel, ensuring guests who have canceled in the past do not repeat would be a good place to start. 
+The barplot pictured below shows the cancellation rate of these two groups. If hotels are concerned about cancellations and would like to improve their ability to predict which guests will not end up staying at the hotel, ensuring guests who have canceled in the past do not repeat would be a good place to start. 
 
 ```{r echo=FALSE}
 p <- ggplot(data=hotels_bookings, aes(x=has_previous_cancellation, y = is_canceled, fill=has_previous_cancellation)) + stat_summary(fun = "mean", geom="bar")
@@ -425,7 +440,7 @@ p + ggtitle("Plot Reservation Cancellation Rate by Previous Cancellation") +
 ```
 
 
-We have seen that there is a stark difference in cancelation rates for guests with and without a previous cancelation on file, but is there any noticeable difference between the two hotels with regards to repeat cancelations?
+We have seen that there is a stark difference in cancellation rates for guests with and without a previous cancellation on file, but is there any noticeable difference between the two hotels with regards to repeat cancellations?
 ```{r echo=FALSE}
 previous_by_hotel = aggregate(is_canceled ~ has_previous_cancellation+hotel, data=hotels_bookings, mean)
 vals <- c(previous_by_hotel[3])
@@ -436,11 +451,11 @@ ggplot(d, aes(x=combos, y=is_canceled, fill=combos)) +  geom_bar(stat = "identit
         axis.ticks.x=element_blank())
 ```
 
-We can see that just as it is higher overall, City Hotel's cancelation rate is higher than that of Resort Hotel regardless of whether or not the guest had previously canceled a reservation. Guests with track records of cancelation has no significant difference between the hotels, both should be aware of the high likelihood of those guests canceling again.
+We can see that just as it is higher overall, City Hotel's cancellation rate is higher than that of Resort Hotel regardless of whether or not the guest had previously canceled a reservation. Guests with track records of cancellation has no significant difference between the hotels, both should be aware of the high likelihood of those guests canceling again.
 
-### Cancellations based on Lead Time
+### Cancellations by Lead Time
 
-Another potential tool a hotel could use to anticipate whether a guest will follow through with their reservation is how far in advance the reservation was booked. If we break up every reservation into bins of less than a week in advance, between 1 week and 1 month, 1 and 2 months, 2 and 4 months, 4 and 6 months, 6 to 8 months, and 8+ months in advance, we get bins with at least 10,000 reservations in each category to look into which has the highest cancelation rate.  
+Another potential tool a hotel could use to anticipate whether a guest will follow through with their reservation is how far in advance the reservation was booked. If we break up every reservation into bins of less than a week in advance, between 1 week and 1 month, 1 and 2 months, 2 and 4 months, 4 and 6 months, 6 to 8 months, and 8+ months in advance, we get bins with at least 10,000 reservations in each category to look into which has the highest cancellation rate.  
 ```{r echo=FALSE}
 hotels_bookings$lead_bin<-"240+ days" #default 
 hotels_bookings$lead_bin[hotels_bookings$lead_time < 7 & hotels_bookings$lead_time >= 0] <- "<7 days"
@@ -457,7 +472,7 @@ The table below indicates that the more lead time with which a reservation was b
 (lead_time_cancel <- aggregate(is_canceled ~ lead_bin, data = hotels_bookings, mean))
 ```
 
-The graph below shows the cancelation rate at each time interval of booking. 
+The graph below shows the cancellation rate at each time interval of booking. 
 
 ```{r echo=FALSE}
 p <- ggplot(data=hotels_bookings, aes(x=lead_bin, y = is_canceled, fill=lead_bin)) + stat_summary(fun = "mean", geom="bar")
@@ -465,10 +480,10 @@ p + ggtitle("Plot Reservation Cancellation Rate by Lead Time") +
   xlab("Lead Time") + ylab("Cancellation Rate") + labs(fill = "Lead Time")
 ```
 
-The cancelation rate crosses the mean cancellation threshold of 37% for the first time in the 60-120 days range, or between 2 and 4 months before the hotel stay date. It continues to grow from there, where the cancelation rate for a reservation more than 8 months out is around 64%, more than double the rate of reservations booked within a month. This trend is likely due to the fact that guests will make plans far in advance knowing that things may change between booking and the actual stay. If there isn't a penalty for cancelation or there is an insignificant one, guests will continue to book far in advance even if they do not fully intend to follow through on the reservation. 
+The cancellation rate crosses the mean cancellation threshold of 37% for the first time in the 60-120 days range, or between 2 and 4 months before the hotel stay date. It continues to grow from there, where the cancellation rate for a reservation more than 8 months out is around 64%, more than double the rate of reservations booked within a month. This trend is likely due to the fact that guests will make plans far in advance knowing that things may change between booking and the actual stay. If there isn't a penalty for cancellation or there is an insignificant one, guests will continue to book far in advance even if they do not fully intend to follow through on the reservation. 
 
 # Conclusion
 
-The report analyzed pricing, cancelation, customer arrivals, company, and agent data to provide useful conclusions. Using this report, the hotels can assess their demand during certain time periods, cancellation behavior from different types of guests, pricing during different time periods, and more. 
+The report analyzed pricing, cancellation, customer arrivals, company, and agent data to provide useful conclusions. Based on the insights in the arrivals section, the hotels can better prepare for busy seasons and ensure materials aren't wasted during quiet seasons. Using the data from the pricing section, they can assess how they are meeting demand by adjusting prices and evaluate whether a systematic change is needed in the setting of prices. By reading the companies and agents section, the hotels can better understand their relationship with third-parties in order to get the most out of those partnerships. Finally, using the insights generated in the cancellation section, the hotels can make more informed decisions around guest bookings to limit cancellations, which can be harmful to the hotel business model.  
 
 
