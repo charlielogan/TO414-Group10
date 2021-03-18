@@ -1,0 +1,109 @@
+---
+title: "Group Project #2: Prosper Data Analysis"
+author: "Ana Mohapatra, Charlie Logan, Srishti Senthil, Jon Demeter, Nikita Mehendale"
+date: "3/17/2021"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    number_sections: true
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+
+Assume that your team has been engaged by a hedge fund to identify potential opportunities in the peer to peer lending space. You have decided to deeply explore the Prosper.com marketplace.
+
+Data for the project is available in ProjectA_Listings2013.csv
+Column headers are self explanatory. You may want to check prosper.com for additional context information.
+
+
+We will build two linear and logistic models to
+
+A linear regression model to determine how interest rate for loans is determined. Essentially, we are getting an idea of what the market considers “credit risks”. We get a sense of how much interest rate premium is demanded by the market for compensating for a specific credit risk.
+
+A logistic model of what factors lead to a loan default. Essentially we want to check our understanding from the last model. All the items that the last model showed as credit risks leading to compensatory adjustment in interest rate - do those items really cause defaults. Are there other items which cause default but which does not show in Model 1?
+
+Our objective is to identify arbitrage opportunities. Are there elements that the market does not consider a risk factor - but it actually is? Looking in the opposite direction - are there elements that market considers a risk factor but actually it isn’t.
+
+You will need to prepare a report with your findings. The report needs to be in HTML format and should contain  your code, output and analysis. We will place heavy emphasis on communicating your analysis in this report - you would want to pay attention to formatting, structure and look/feel of the report.
+
+**Deadline for submission is EoD Sun Mar 21st.**
+
+```{r}
+listings <- read.csv("ProjectA_Listings2013.csv")
+View(listings)
+
+
+#Factorize categorical variables
+
+#choose columns to factorize
+cols <- c("loan_status", "loan_status_description", "prosper_rating", "scorex", "prosper_score", "listing_category_id", "income_range", "income_range_description", "employment_status_description", "occupation", "borrower_state", "borrower_city", "first_recorded_credit_line")
+
+# For later: should also factorize month with string parsing
+
+listings[cols] <- lapply(listings[cols], factor)  #coerce chosen columns
+sapply(listings, class) #check result
+
+summary(listings$dti_wprosper_loan)
+
+boxplot(listings$dti_wprosper_loan) # Can see single outlier > 1
+listings$dti_wprosper_loan <- ifelse(listings$dti_wprosper_loan==1000000, NA, listings$dti_wprosper_loan) # Set extreme outlier to NA
+boxplot(listings$dti_wprosper_loan, horizontal = T, col = "darkseagreen2", xlab = "Average Daily Rate (in USD)")  # Verify that extreme outlier has been eliminated
+
+
+# Future goal: instead of choosing arbitrary 10 upper cut-off, eliminate values based on unreasonable other variable values
+listings$dti_wprosper_loan_adj <- ifelse(listings$dti_wprosper_loan>10, NA, listings$dti_wprosper_loan) # Set other outliers to NA
+boxplot(listings$dti_wprosper_loan_adj, horizontal = T, col = "darkseagreen2", xlab = "Debt-to-Income Ratio")
+# Future question: did all high DTI outliers default??
+```
+
+Column Title Notes:
+
+1. `prosper_rating` The Prosper Rating is our proprietary system that allows us to maintain consistency when evaluating each loan application. Prosper Ratings allow investors to consider a loan's level of risk because the rating represents an estimated average annualized loss rate range.
+
+2. `now_delinquent_derog` Derogatory marks are negative, long-lasting indications on your credit reports that generally mean you didn't pay back a loan as agreed. For example, a late payment or bankruptcy appears on your reports as a derogatory mark.
+
+3. A custom risk score was built using historical Prosper data to assess the risk of Prosper borrower listings. The output to Prosper users is a Prosper score which ranges from 1 to 11, with 11 being the best, or lowest risk, score. The worst, or highest risk, score, is a 1. 
+
+4. scorex is credit score intervals
+
+5. dti_wprosper_loan = debt / income. Your debt-to-income ratio (DTI) compares how much you owe each month to how much you earn. The lower the DTI; the less risky you are to lenders.
+
+6. borrower rate is interest rate
+
+7. A default risk premium is effectively the difference between a debt instrument’s interest rate and the risk-free rate. The default risk premium exists to compensate investors for an entity’s likelihood of defaulting on their debt.
+In Jan 1, 2013, the 10-year T-bill rate was	1.91%.
+
+# Linear Regression : Jonathan, Charlie
+
+*How is interest rate for loans determined?*  
+What does the market consider a “credit risk”? What explanatory variables are correlated to `borrower_rate`?
+How much interest rate premium does the market demand to compensate for a specific credit risk (ex. 1 additional delinquency in most recent month)?
+
+
+## Interaction terms?
+
+
+# Logistic Regression : Ana, Srishti, Nikita
+
+*What factors lead to a loan default?*  
+Essentially we want to check our understanding from the last model. All the items that the last model showed as credit risks leading to compensatory adjustment in interest rate - do those items really cause defaults. Are there other items which cause default but which does not show in Model 1?
+
+Which explanatory variables are significant when predicting `loan_status`?
+
+
+
+# Identify arbitrage opportunities
+Are there elements that the market does not consider a risk factor - but it actually is? Looking in the opposite direction - are there elements that market considers a risk factor but actually it isn’t.
+
+What explanatory variables drive logistic regression but not linear regression, and vice versa.
+
+
+# Conclusion
