@@ -132,7 +132,7 @@ head(train_set)
 ```
 ```{r find optimal linear model}
 
-col_names <- colnames(tr)[c(1:20)]
+col_names <- colnames(tr)[c(1:20)]     # practice modeling with 20 of the explanatory vars first
 col_names
 
 tr1 <- subset(tr, select=col_names)
@@ -140,7 +140,7 @@ tr1 <- subset(tr, select=col_names)
 m1 <- lm(borrower_rate ~., data = tr1)
 summary(m1)
 
-col_names <- colnames(tr)[c(6,21:ncol(tr))]   # which vars were included "c(6,21:ncol(tr))" ?
+col_names <- colnames(tr)[c(6,21:ncol(tr))]   # Now modelling with all other variables
 tr2 <- subset(tr, select=col_names)
 m2 <- lm(borrower_rate ~., data = tr2)
 summary(m2)
@@ -156,7 +156,7 @@ tr3 <- subset(tr, select= -c(first_recorded_credit_month, borrower_state, curren
                          credit_lines_last7_years, delinquencies_over90_days, delinquencies_over60_days,
                          was_delinquent_derog, now_delinquent_derog, satisfactory_accounts,
                          total_trade_items, real_estate_payment, delinquencies_last7_years,
-                         current_delinquencies, monthly_debt, months_employed))
+                         current_delinquencies, monthly_debt, months_employed))   #exclude insignificant vars
 
 tr3 <- na.omit(tr3)
 m3 <- lm(borrower_rate ~., data = tr3)
@@ -164,7 +164,7 @@ summary(m3)
 
 slm3 <- step(m3)
 summary(slm3)
-slm3$anova
+# slm3$anova
 ```
 
 ```{r linear regression predictions}
@@ -176,7 +176,7 @@ slm3_result <- postResample(pred, y_test)
 
 
 ```
-
+^will be useful for interpretation
 
 ## Interaction terms?
 
@@ -188,14 +188,26 @@ Essentially we want to check our understanding from the last model. All the item
 
 Which explanatory variables are significant when predicting `loan_status`?
 
+We have 4 types of loan listings:
 
+CHARGEOFF COMPLETED   CURRENT DEFAULTED 
+     2768     13765     15460      1549 
+     
+COMPLETED: paid back
+CURRENT: due date not yet arrived
+DEFAULTED: past due, not yet paid
+CHARGEOFF: no longer reasonable expectation of future payment
 
 Loan_status =
 ```{r all_effects}
-# View(raw_listings)
-tr$defaulted <- as.factor(ifelse(tr$loan_status == 3, 1, 0))
-tr_noNA <- na.omit(subset(tr, select= -c(loan_status))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
-all_log <- glm(defaulted ~ ., data = tr_noNA, family = "binomial") #Too many variables?  Red text: glm.fit: fitted probabilities numerically 0 or 1 occurred
+#View(raw_listings)
+#table(raw_listings$loan_status_description)
+
+trl <- tr[tr$loan_status != 1,]  # Remove rows where loan_status == 1
+
+trl$defaulted <- ifelse(trl$loan_status == 2 | trl$loan_status == 3, 1, 0)    # Defaulted or Charged-off Listing
+tr_noNA <- na.omit(subset(trl, select= -c(loan_status))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
+all_log <- glm(defaulted ~ ., data = tr_noNA, family = "binomial")
 summary(all_log)   # AIC: 9107.3
 ```
 Notes from `all_log` output:
@@ -224,8 +236,6 @@ Notes from `all_log` output:
 ## loan_origination_month4                      0.077054 .  
 ## loan_origination_month5                      0.094343 .  
 
-`loan_origination_month`,`total_inquiries`, `lender_indicator`,  `income_range` (4,5), `occupation` (Police Officer/Correction Officer, Administrative Assistant), `number_of_days`, `principal_balance`, `amount_funded` , `prosper_rating`, `borrower_rate`, `listing_term`, `listing_monthly_payment`.
-
 
 **Should do wald.test on signif occupation terms together & signif loan origin months together
 
@@ -242,7 +252,7 @@ sig_log1 <- glm(defaulted ~ ., data = tr4, family = "binomial")
 
 summary(sig_log1)   # AIC: 8988.3  
 
-#Later, could make 0/1 var for the significant occupations only :  `is_signif_occupation`
+#Later, could make 0/1 var for the significant occupations only :  `is_signif_occupation`   do this if wald.test returns combined signif vars 
 
 step_log = step(sig_log1, type = "both")   # AIC=8986.38
 ```
@@ -268,15 +278,16 @@ y_tr <- listings[train_set, "borrower_rate"]
 ```
 
 ```{r}
-test$defaulted <- as.factor(ifelse(test$loan_status == 3, 1, 0))
+
+test$defaulted <- as.factor(ifelse(test$loan_status == 2 | test$loan_status == 3, 1, 0))
 log_xtest <- na.omit(subset(test, select= -c(loan_status, defaulted))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
 log_ytest <- test[, "defaulted"]
 levels(log_ytest)  # Factor with 2 levels 0,1
 
-ls_pred <- as.factor(ifelse(predict(step_log, newdata = log_ytest,  type = "response") >= 0.5, 1, 0))
-table(ls_pred)  # Only predicted defaulted = 0??   
+ls_pred <- as.factor(ifelse(predict(step_log, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
+table(ls_pred)  # Only predicted defaulted = 0??  
 
-confusionMatrix(data = ls_pred, reference = log_ytest)
+confusionMatrix(data = ls_pred, reference = log_ytest)  # Levels are not in the same order for reference and data. Refactoring data to match.
 
 ```
 
