@@ -240,7 +240,10 @@ Notes from `all_log` output:
 **Should do wald.test on signif occupation terms together & signif loan origin months together
 
 ```{r}
-tr4 <- subset(tr_noNA, select= c(defaulted, number_of_days, principal_balance, amount_funded ,listing_term ,prosper_score , income_range ,occupation, monthly_debt, public_records_last12_months ,bankcard_utilization  ,total_open_revolving_accounts ,total_inquiries,loan_origination_month))
+tr4 <- subset(tr_noNA, select= c(defaulted, number_of_days, principal_balance, amount_funded ,listing_term, prosper_score, income_range ,occupation, monthly_debt, public_records_last12_months ,bankcard_utilization,total_open_revolving_accounts ,total_inquiries,loan_origination_month))
+
+
+
 sig_log <- glm(defaulted ~ ., data = tr4, family = "binomial")  
 
 
@@ -289,10 +292,34 @@ table(ls_pred)  # Only predicted defaulted = 0??
 
 confusionMatrix(data = ls_pred, reference = log_ytest)  # Levels are not in the same order for reference and data. Refactoring data to match.
 
-corrtest <- data.frame(listings$principal_balance,listings$amount_funded, listings$listing_term, listings$prosper_score, listings$monthy_debt, listings$total_inquiries)
-cor(corrtest)
+
+
+
+
 ```
 
+```{r}
+# Dropped number of days and principal balance variable to avoid multicolinearity 
+newmodel <- glm(defaulted ~   amount_funded + 
+listing_term + prosper_score + income_range + monthly_debt + 
+public_records_last12_months + bankcard_utilization + total_open_revolving_accounts + 
+total_inquiries + loan_origination_month, data = tr4, family = "binomial")
+
+step_newmodel = step(newmodel, type = "both") 
+summary(step_newmodel)
+
+test$defaulted <- as.factor(ifelse(test$loan_status == 2 | test$loan_status == 3, 1, 0))
+log_xtest <- na.omit(subset(test, select= -c(loan_status, defaulted))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
+log_ytest <- test[, "defaulted"]
+levels(log_ytest)  # Factor with 2 levels 0,1
+
+ls_pred <- as.factor(ifelse(predict(step_newmodel, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
+table(ls_pred)  
+
+confusionMatrix(data = ls_pred, reference = log_ytest)
+
+
+```
 
 
 # Identify arbitrage opportunities
