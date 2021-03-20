@@ -289,6 +289,8 @@ table(ls_pred)  # Only predicted defaulted = 0??
 
 confusionMatrix(data = ls_pred, reference = log_ytest)  # Levels are not in the same order for reference and data. Refactoring data to match.
 
+corrtest <- data.frame(listings$principal_balance,listings$amount_funded, listings$listing_term, listings$prosper_score, listings$monthy_debt, listings$total_inquiries)
+cor(corrtest)
 ```
 
 
