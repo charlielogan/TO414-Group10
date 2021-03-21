@@ -63,8 +63,7 @@ listings$loan_origination_month <- month(mdy(listings$loan_origination_date))
 
 #delete cols
 listings <- subset(listings[,], select = -c(loan_origination_date, first_recorded_credit_line, borrower_city,
-                                            listing_category_id, loan_status_description, income_range_description,
-                                            employment_status_description))
+                                            listing_category_id, loan_status_description, income_range_description))
 
 #choose columns to factorize
 cols <- c("loan_status", "scorex", "prosper_rating", "income_range", "occupation", "borrower_state", "first_recorded_credit_month", "loan_origination_month")
@@ -84,10 +83,12 @@ listings$dti_wprosper_loan_adj <- ifelse(listings$dti_wprosper_loan>10, NA, list
 boxplot(listings$dti_wprosper_loan_adj, horizontal = T, col = "darkseagreen2", xlab = "Debt-to-Income Ratio")
 # Future question: did all high DTI outliers default??
 
+
 boxplot(listings$monthly_debt, horizontal = T, col = "darkseagreen2", xlab = "Monthly Debt")
 listings$monthly_debt_adj <- ifelse(listings$monthly_debt>13000, NA, listings$monthly_debt)
 
 boxplot(listings$monthly_debt_adj, horizontal = T, col = "darkseagreen2", xlab = "Monthly Debt")
+
 
 ```
 
@@ -103,7 +104,7 @@ Column Title Notes:
 
 5. dti_wprosper_loan = debt / income. Your debt-to-income ratio (DTI) compares how much you owe each month to how much you earn. The lower the DTI; the less risky you are to lenders.
 
-6. `borrower_rate` is interest rate owed on that particular loan
+6. borrower rate is interest rate
 
 7. A default risk premium is effectively the difference between a debt instrument’s interest rate and the risk-free rate. The default risk premium exists to compensate investors for an entity’s likelihood of defaulting on their debt.
 In Jan 1, 2013, the 10-year T-bill rate was	1.91%.
@@ -113,6 +114,8 @@ In Jan 1, 2013, the 10-year T-bill rate was	1.91%.
 *How is interest rate for loans determined?*  
 What does the market consider a “credit risk”? What explanatory variables are correlated to `borrower_rate`?
 How much interest rate premium does the market demand to compensate for a specific credit risk (ex. 1 additional delinquency in most recent month)?
+
+### Add rest of linear intro here
 
 ```{r prepare data for lm}
 #listings_cols <- c(1,2,6,8,9,10,12,16,18,21,24,25,26,27,28,30:33,35)
@@ -134,6 +137,7 @@ y_test <- test[, "borrower_rate"]
 
 head(train_set)
 ```
+Broke the dataset into two parts so R could handle the training
 ```{r find optimal linear model}
 
 col_names <- colnames(tr)[c(1:20)]     # practice modeling with 20 of the explanatory vars first
@@ -151,6 +155,7 @@ summary(m2)
 
 ```
 
+Combined the significant columns from both models and ran stepwise
 ```{r refined linear regression}
 
 #remove insignificant columns from tr
@@ -160,7 +165,7 @@ tr3 <- subset(tr, select= -c(first_recorded_credit_month, borrower_state, curren
                          credit_lines_last7_years, delinquencies_over90_days, delinquencies_over60_days,
                          was_delinquent_derog, now_delinquent_derog, satisfactory_accounts,
                          total_trade_items, real_estate_payment, delinquencies_last7_years,
-                         current_delinquencies, monthly_debt, months_employed))   #exclude insignificant vars
+                         current_delinquencies, monthly_debt, months_employed, loan_status))   #exclude insignificant vars
 
 tr3 <- na.omit(tr3)
 m3 <- lm(borrower_rate ~., data = tr3)
@@ -171,6 +176,7 @@ summary(slm3)
 # slm3$anova
 ```
 
+Prediction based on model
 ```{r linear regression predictions}
 
 pred <- predict(slm3, x_test)
@@ -182,7 +188,45 @@ slm3_result <- postResample(pred, y_test)
 ```
 ^will be useful for interpretation
 
-## Interaction terms?
+## Refined model with Interaction terms
+```{r}
+lm4 <- lm(formula = borrower_rate ~ number_of_days + principal_balance + 
+     amount_funded + prosper_rating + listing_term + 
+    listing_monthly_payment + prosper_score + income_verifiable + 
+    dti_wprosper_loan + lender_indicator + public_records_last10_years + 
+    scorex*open_credit_lines + bankcard_utilization + total_open_revolving_accounts + 
+    real_estate_balance + revolving_balance + total_inquiries + 
+    delinquencies_over30_days + is_homeowner + loan_origination_month, 
+    data = tr3)
+summary(lm4)
+```
+```{r}
+lm5<- lm(formula = borrower_rate ~ number_of_days + principal_balance + 
+    amount_funded + prosper_rating + listing_term + 
+    listing_monthly_payment + prosper_score + income_verifiable + 
+    lender_indicator + public_records_last10_years + is_homeowner + 
+    scorex + prosper_score*open_credit_lines + bankcard_utilization + total_open_revolving_accounts + 
+    real_estate_balance + revolving_balance + total_inquiries + 
+    delinquencies_over30_days + is_homeowner*dti_wprosper_loan + loan_origination_month, 
+    data = tr3)
+summary(lm5)
+```
+```{r linear regression predictions}
+
+pred <- predict(lm5, x_test)
+
+postResample(pred, y_test)
+lm5_result <- postResample(pred, y_test)
+
+
+```
+
+### Definitions of final model variables
+
+### Interpretation of final model
+
+
+### Conclusion of linear
 
 
 # Logistic Regression : Ana, Srishti, Nikita
@@ -210,10 +254,6 @@ Loan_status =
 trl <- tr[tr$loan_status != 1,]  # Remove rows where loan_status == 1
 
 trl$defaulted <- ifelse(trl$loan_status == 2 | trl$loan_status == 3, 1, 0)    # Defaulted or Charged-off Listing
-
-#trl$dti_wprosper_loan_adj <- ifelse(trl$dti_wprosper_loan>10, NA, listings$dti_wprosper_loan) # remove outliers
-#trl$monthly_debt_adj <- ifelse(trl$monthly_debt>13000, NA, listings$monthly_debt)# remove outliers
-
 tr_noNA <- na.omit(subset(trl, select= -c(loan_status))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
 all_log <- glm(defaulted ~ ., data = tr_noNA, family = "binomial")
 summary(all_log)   # AIC: 9107.3
@@ -247,8 +287,11 @@ Notes from `all_log` output:
 
 **Should do wald.test on signif occupation terms together & signif loan origin months together
 
-```{r, warning = F, message = F}
-tr4 <- subset(tr_noNA, select= c(defaulted, number_of_days, principal_balance, amount_funded ,listing_term ,prosper_score , income_range ,occupation, monthly_debt_adj, monthly_debt, public_records_last12_months ,bankcard_utilization  ,total_open_revolving_accounts,total_inquiries,loan_origination_month))
+```{r}
+tr4 <- subset(tr_noNA, select= c(defaulted, number_of_days, principal_balance, amount_funded ,listing_term, prosper_score, income_range ,occupation, monthly_debt, public_records_last12_months ,bankcard_utilization,total_open_revolving_accounts ,total_inquiries,loan_origination_month))
+
+
+
 sig_log <- glm(defaulted ~ ., data = tr4, family = "binomial")  
 
 
@@ -260,14 +303,15 @@ sig_log1 <- glm(defaulted ~ ., data = tr4, family = "binomial")
 
 summary(sig_log1)   # AIC: 8988.3  
 
+#Later, could make 0/1 var for the significant occupations only :  `is_signif_occupation`   do this if wald.test returns combined signif vars 
 
 step_log = step(sig_log1, type = "both")   # AIC=8986.38
 ```
 `step_log` with AIC=8986 is this relation:
-defaulted ~ number_of_days + principal_balance + amount_funded + listing_term + prosper_score + income_range + monthly_debt + public_records_last12_months + total_open_revolving_accounts + total_inquiries + loan_origination_month
-```{r}
-#Later, could make 0/1 var for the significant occupations only :  `is_signif_occupation`   do this if wald.test returns combined signif vars 
-```
+defaulted ~ number_of_days + principal_balance + amount_funded + 
+    listing_term + prosper_score + income_range + monthly_debt + 
+    public_records_last12_months + total_open_revolving_accounts + 
+    total_inquiries + loan_origination_month
 
 Possible interactions:
 
@@ -284,6 +328,23 @@ x_tr <- subset(listings[train_set, ], select = -c(borrower_rate))
 y_tr <- listings[train_set, "borrower_rate"]
 ```
 
+```{r}
+
+test$defaulted <- as.factor(ifelse(test$loan_status == 2 | test$loan_status == 3, 1, 0))
+log_xtest <- na.omit(subset(test, select= -c(loan_status, defaulted))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
+log_ytest <- test[, "defaulted"]
+levels(log_ytest)  # Factor with 2 levels 0,1
+
+ls_pred <- as.factor(ifelse(predict(step_log, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
+table(ls_pred)  # Only predicted defaulted = 0??  
+
+confusionMatrix(data = ls_pred, reference = log_ytest)  # Levels are not in the same order for reference and data. Refactoring data to match.
+
+
+
+
+
+```
 
 ```{r}
 # Dropped number of days and principal balance variable to avoid multicolinearity 
@@ -293,119 +354,32 @@ public_records_last12_months + bankcard_utilization + total_open_revolving_accou
 total_inquiries + loan_origination_month, data = tr4, family = "binomial")
 
 step_newmodel = step(newmodel, type = "both") 
-summary(step_newmodel)   #AIC: 13898
-
-
-
+summary(step_newmodel)
 
 test$defaulted <- as.factor(ifelse(test$loan_status == 2 | test$loan_status == 3, 1, 0))
 log_xtest <- na.omit(subset(test, select= -c(loan_status, defaulted))) # scrap rows with NA values -- later, can sub in random in-range values to still use the workable data
 log_ytest <- test[, "defaulted"]
 levels(log_ytest)  # Factor with 2 levels 0,1
 
-step_pred <- as.factor(ifelse(predict(step_newmodel, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
-table(step_pred)  
+ls_pred <- as.factor(ifelse(predict(step_newmodel, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
+table(ls_pred)  
 
-confusionMatrix(data = step_pred, reference = log_ytest)  # 86.8% Accuracy
-
-
-```
-```{r}
-
-#AIC to beat: 13898
-lm1 <- glm(formula = defaulted ~ amount_funded + listing_term + prosper_score + 
-    income_range + monthly_debt + public_records_last12_months + 
-    bankcard_utilization + total_open_revolving_accounts + 
-    loan_origination_month, family = "binomial", data = tr4)
-summary(lm1) #13898
-
-lm2 <- glm(formula = defaulted ~ amount_funded + listing_term + prosper_score + 
-    income_range + monthly_debt + public_records_last12_months + 
-    bankcard_utilization + total_open_revolving_accounts, family = "binomial", data = tr4)
-summary(lm2) #13903
-
+confusionMatrix(data = ls_pred, reference = log_ytest)
 
 
 ```
-defaulted ~ amount_funded + listing_term + prosper_score + 
-    income_range + monthly_debt + public_records_last12_months + 
-    bankcard_utilization + total_open_revolving_accounts + 
-    loan_origination_month
-    
-```{r}
-#AIC to beat 13898
-im1 <- glm(defaulted ~   amount_funded + 
-listing_term + prosper_score + income_range + monthly_debt + 
-public_records_last12_months + bankcard_utilization + total_open_revolving_accounts + loan_origination_month + amount_funded*monthly_debt + bankcard_utilization*total_open_revolving_accounts, data = tr4, family = "binomial")
+### definitions of logistic variables
 
-summary(im1) #AIC: 13885
+### Interpretation of logistic model
 
+### conclusion of logistic model
 
-#Accuracy from step to beat: 86.8%
-
-im1_pred <- as.factor(ifelse(predict(im1, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
-
-confusionMatrix(data = im1_pred, reference = log_ytest)   # Accuracy = 86.8%
-```
-```{r}
-im2 <- glm(defaulted ~   amount_funded + 
-listing_term + prosper_score + income_range + monthly_debt_adj + 
-public_records_last12_months + bankcard_utilization + total_open_revolving_accounts + loan_origination_month + amount_funded*monthly_debt_adj + bankcard_utilization*total_open_revolving_accounts + `monthly_debt_adj`*`bankcard_utilization`, data = tr4, family = "binomial")
-
-summary(im2) #AIC: 13976
-
-
-#Accuracy to beat: 86.8%
-
-
-im2_pred <- as.factor(ifelse(predict(im2, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
-
-confusionMatrix(data = im2_pred, reference = log_ytest)   # Accuracy = 86.6%
-```
-```{r}
-im3 <- glm(defaulted ~   amount_funded + 
-listing_term + prosper_score + income_range + monthly_debt_adj + 
-public_records_last12_months + bankcard_utilization + total_open_revolving_accounts + loan_origination_month + amount_funded*monthly_debt_adj + bankcard_utilization*total_open_revolving_accounts + monthly_debt_adj*bankcard_utilization + income_range*I(total_open_revolving_accounts)^2, data = tr4, family = "binomial")
-
-summary(im3) #AIC: 13973
-
-
-im3_pred <- as.factor(ifelse(predict(im3, newdata = log_xtest,  type = "response") >= 0.5, 1, 0))
-
-confusionMatrix(data = im3_pred, reference = log_ytest)   # Accuracy = 86.6%
-```
-    
-Column Title Notes:
-`defaulted` True if loan defaulted or charged-off
-`amount_funded` Initial Invested Amount minus total principal payments made to the Lender so far
-`listing_term` Loan pay-off maturity
-`prosper_score` Estimated probability of loan going "bad" (60+ days past due within 1st year)
-`income_range` Of borrower, as determined by lender
-`monthly_debt` Regular monthly debt obligation (minimum payment)
-`public_records_last12_months` Includes bankruptcy, forclosure, tax evasion, lawsuits, etc
-`bankcard_utilization` Total debt utilized by borrowed, out of total revolving credit approved for by Lenders
-`total_open_revolving_accounts` Max credit limit to borrow against, without specific maturity date.
-
-Variables with significant interactions:
-`bankcard_utilization` * `total_open_revolving_accounts`
-`amount_funded` *`monthly_debt_adj`
-`monthly_debt_adj` * `bankcard_utilization`
-`income_range` * `total_open_revolving_accounts`    " Coefficients: (1 not defined because of singularities)  "
-
-```{r}
-
-# Plot interaction terms to visualize
-plot(listings$total_open_revolving_accounts,listings$bankcard_utilization) # does not appear correlated
-plot(listings$monthly_debt_adj, listings$amount_funded) # does not appear correlated. Amount funded tends to be a round figure.
-plot(listings$income_range,listings$total_open_revolving_accounts) #might be a quadratic fit?
-plot(listings$monthly_debt_adj,listings$bankcard_utilization) # does not appear correlated
-```
-
-
-# Identify arbitrage opportunities
+# Identify arbitrage opportunities (what a lender could take out of this information)
 Are there elements that the market does not consider a risk factor - but it actually is? Looking in the opposite direction - are there elements that market considers a risk factor but actually it isn’t.
 
 What explanatory variables drive logistic regression but not linear regression, and vice versa.
 
+1. Be aware of human biases when lending (for example whether the borrower is a homeowner)
+2. Considering fewer variables (reducing noise and only focusing on what actually leads to defaulting).
 
 # Conclusion
