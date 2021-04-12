@@ -9,14 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Read in data for power lifting
-```{r}
-power_lift <- read.csv("openpowerlifting.csv")
-
-str(power_lift)
-summary(power_lift)
-```
-
 
 ## Read in data
 ```{r}
@@ -74,5 +66,13 @@ spotify_pred <- ifelse(spotify_pred > .25, 1, 0)
 summary(spotify_pred)
 CrossTable(x = spotify_pred, y = spotify_test$popularity_bin, prop.chisq=FALSE)
 confusionMatrix(spotify_pred, spotify_test$popularity_bin)
+```
+Look at spotify dancability score
+```{r}
+
+dance_model <- lm(danceability ~ tempo + valence + speechiness + 
+                    mode + liveness + key + instrumentalness + 
+                    explicit + energy + duration_ms + acousticness, data = spotify)
+summary(dance_model)
 ```
 
