@@ -1,0 +1,78 @@
+---
+title: "P3"
+author: "Jonathan Demeter"
+date: "4/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in data for power lifting
+```{r}
+power_lift <- read.csv("openpowerlifting.csv")
+
+str(power_lift)
+summary(power_lift)
+```
+
+
+## Read in data
+```{r}
+spotify <- read.csv("data.csv")
+#spotify_by_artist <- read.csv("data_by_artist.csv")
+
+spotify <- subset(spotify, select = -c(id, name, release_date))
+spotify$artists <- as.factor(spotify$artists)
+str(spotify)
+summary(spotify)
+```
+
+## test and train
+```{r}
+set.seed(1234)
+
+test_set <- sample(1:nrow(spotify), 30000)
+
+spotify_train <- spotify[-test_set, ]
+spotify_test <- spotify[test_set, ]
+```
+
+
+## Linear Model
+```{r}
+spotify_lin <- lm(popularity ~ valence + speechiness + 
+                    mode + liveness + key + instrumentalness + 
+                    explicit + energy + duration_ms + danceability + acousticness, data = spotify)
+summary(spotify_lin)
+
+```
+## Logistic Regressions
+```{r}
+library(class)
+library(caret)
+library(gmodels)
+spotify_train$popularity_bin <-spotify_train$popularity / 100
+median(spotify_train$popularity_bin)
+summary(spotify_train$popularity_bin)
+spotify_train$popularity_bin <- ifelse(spotify_train$popularity > .25, 1, 0)
+
+spotify_test$popularity_bin <- spotify_test$popularity / 100
+mean(spotify_test$popularity_bin)
+spotify_test$popularity_bin <- ifelse(spotify_test$popularity > .25, 1, 0)
+
+
+spotify_log <- glm(popularity_bin ~ valence + speechiness + 
+                    liveness + instrumentalness + 
+                    energy + duration_ms + danceability + acousticness,
+                   data = spotify_train, family = "binomial")
+summary(spotify_log)
+
+spotify_pred <- predict(spotify_log, newdata = spotify_test, type = "response")
+spotify_pred <- ifelse(spotify_pred > .25, 1, 0)
+summary(spotify_pred)
+CrossTable(x = spotify_pred, y = spotify_test$popularity_bin, prop.chisq=FALSE)
+confusionMatrix(spotify_pred, spotify_test$popularity_bin)
+```
+
