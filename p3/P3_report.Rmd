@@ -45,16 +45,18 @@ summary(spotify_lin)
 library(class)
 library(caret)
 library(gmodels)
+
+popularity_threshold <- 42
+
 spotify_train$popularity_bin <-spotify_train$popularity / 100
 median(spotify_train$popularity_bin)
 summary(spotify_train$popularity_bin)
-spotify_train$popularity_bin <- ifelse(spotify_train$popularity > .25, 1, 0)
+spotify_train$popularity_bin <- ifelse(spotify_train$popularity > popularity_threshold, 1, 0)
 
 spotify_test$popularity_bin <- spotify_test$popularity / 100
 mean(spotify_test$popularity_bin)
-spotify_test$popularity_bin <- ifelse(spotify_test$popularity > .25, 1, 0)
-
-
+spotify_test$popularity_bin <- ifelse(spotify_test$popularity > popularity_threshold, 1, 0)
+summary(as.factor(spotify_test$popularity_bin))
 spotify_log <- glm(popularity_bin ~ valence + speechiness + 
                     liveness + instrumentalness + 
                     energy + duration_ms + danceability + acousticness,
@@ -62,7 +64,7 @@ spotify_log <- glm(popularity_bin ~ valence + speechiness +
 summary(spotify_log)
 
 spotify_pred <- predict(spotify_log, newdata = spotify_test, type = "response")
-spotify_pred <- ifelse(spotify_pred > .25, 1, 0)
+spotify_pred <- ifelse(spotify_pred >  popularity_threshold/100, 1, 0)
 summary(spotify_pred)
 CrossTable(x = spotify_pred, y = spotify_test$popularity_bin, prop.chisq=FALSE)
 confusionMatrix(spotify_pred, spotify_test$popularity_bin)
@@ -74,5 +76,58 @@ dance_model <- lm(danceability ~ tempo + valence + speechiness +
                     mode + liveness + key + instrumentalness + 
                     explicit + energy + duration_ms + acousticness, data = spotify)
 summary(dance_model)
+```
+
+```{r}
+spotify$decades <- cut(spotify$year, breaks = c(0,1929, 1939, 1949, 1959, 1969, 1979, 1989, 1999, 2009, 2019, Inf), labels = c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"))
+summary(spotify)
+```
+
+```{r}
+ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = popularity, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = valence, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = danceability, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = explicit, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+
+```{r}
+summary(spotify$decades)
+```
+
+```{r}
+ggplot(spotify, aes(x = decades, y = duration_ms, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+hist(spotify$popularity)
+```
+
+```{r}
+summary(spotify)
+quantile(spotify$popularity, probs=seq(.1, .9, by = .1))
+
+spotify$hit_class <- ifelse(spotify$popularity >= 56, "mega-hit", ifelse(spotify$popularity > 42, "hit", "not hit"))
+spotify$hit_class <- as.factor(spotify$hit_class)
+```
+```{r}
+library(C50)
 ```
 
