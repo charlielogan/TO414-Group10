@@ -104,7 +104,90 @@ audio_test_labs <- audio_featuresN[test_set,"danceability"]
 
 # General Music Attributes
 ## By Decade
+```{r}
+ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = popularity, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = valence, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = danceability, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = explicit, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = duration_ms, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+The graphs show us very interesting trends through the decades. There is a trend towards more loud, high tempo, exlicit, and dancible songs. It also shows that people on Spotify listen to music from the 90's and 2000's the most. 
+
 ## By Popularity
+```{r}
+hist(spotify$popularity)
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = danceability, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = energy, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = speechiness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+
+Based on the graphs above, we can see that mega-hits typically have higher dancibility, energy, explicitness, and tempo BUT lower acousticness, instrumentalness, liveness, loudness, mode, and valence.
+```{r}
+sort(table(spotify$artists), decreasing = TRUE)[1:20]
+```
+
 
 # Decade Prediction
 ## Is the song from the 80s?
