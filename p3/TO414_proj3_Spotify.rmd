@@ -53,6 +53,7 @@ Audio Features
 ```{r}
 audio_features$release_year <- substr(audio_features$release_date,1,4)
 audio_features$release_year <- as.numeric(audio_features$release_year)
+audio_features$key <- as.factor(audio_features$key)
 boxplot(audio_features$release_year, horizontal = T, main = "Year of Song Release")
 audio_features <- subset(audio_features, select = -c(id, name, popularity, artists, id_artists, release_date))
 ```
@@ -110,14 +111,25 @@ audio_test_labs <- audio_featuresN[test_set,"danceability"]
 ## Which decades are easiest to predict?
 
 # Danceability Prediction
-### Linear
-This was the first model we ran together
+Spotify defines danceability as follows:
+``Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity.
+A value of 0.0 is least danceable and 1.0 is most danceable.''
+
+(This was the first model we ran together)
 ```{r}
 dance_model <- lm(danceability ~ tempo + valence + speechiness + 
                     mode + liveness + key + instrumentalness + 
                     explicit + energy + duration_ms + acousticness, data = spotify)
 summary(dance_model)
 ```
+
+By running regression models on the audio features dataset, we can try to predict to what extent the danceability algorithm incorporates the various elements such as those mentioned in the definition above.
+
+```{r}
+dm1 <- lm(danceability ~ ., data = audio_train)
+```
+
+
 ### ANN
 
 # Popularity Prediction
