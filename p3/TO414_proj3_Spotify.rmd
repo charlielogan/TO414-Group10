@@ -46,7 +46,11 @@ popularity_threshold <- 42
 quantile(spotify$popularity, probs=seq(.1, .9, by = .1))
 spotify$hit_class <- ifelse(spotify$popularity >= 56, "mega-hit", ifelse(spotify$popularity > popularity_threshold, "hit", "not hit"))
 spotify$hit_class <- as.factor(spotify$hit_class)
+# true or false if top 10% or not
+spotify$binary_hit_class <- ifelse(spotify$hit_class == "mega-hit", 1, 0)
+spotify$binary_hit_class <- as.factor(spotify$binary_hit_class)
 table(spotify$hit_class)
+
 ```
 
 Audio Features
@@ -191,27 +195,22 @@ sort(table(spotify$artists), decreasing = TRUE)[1:20]
 
 # Decade Prediction
 ## Is the song from the 80s?
-
 ```{r}
-
-
-
 eighties_train <- subset(spotify_train, select = -c(artists, year, hit_class))
 eighties_test <- subset(spotify_test, select = -c(artists, year, hit_class))
 summary(eighties_train)
 summary(eighties_test)
 eighties_train$eighties <- ifelse(eighties_train$decades == "80s", 1, 0)
 eighties_test$eighties <- ifelse(eighties_test$decades == "80s", 1, 0)
-
-
 ```
 
 ```{r}
 
-summary(eighties_train)
 eighties_log <- glm(eighties ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + mode + 
-                      speechiness + tempo + key, data = eighties_train, family = "binomial")
+                      speechiness + tempo + key + instrumentalness*danceability + 
+                      duration_ms*acousticness + duration_ms*valence + duration_ms*valence + danceability*instrumentalness, 
+                    data = eighties_train, family = "binomial")
 summary(eighties_log)
 
 eighties_pred_log <- predict(eighties_log, eighties_test, type = "response")
@@ -226,7 +225,8 @@ library(C50)
 
 eighties_dtm <- C5.0(as.factor(eighties) ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + mode + 
-                      speechiness + tempo + valence, data = eighties_train)
+                      speechiness + tempo + key + instrumentalness*energy + 
+                      duration_ms*acousticness + duration_ms*valence + duration_ms*valence + danceability*instrumentalness, data = eighties_train)
 
 
 eighties_pred_dt <- predict(eighties_log, eighties_test, type = "response")
@@ -234,7 +234,18 @@ eighties_pred_dt <- ifelse(eighties_pred_dt > .5, 1, 0)
 confusionMatrix(as.factor(eighties_pred_dt), as.factor(eighties_test$eighties))
 
 ```
+
 ## Which decades are easiest to predict?
+```{r}
+decade_dtm <- C5.0(decades ~ acousticness + danceability + duration_ms + energy + explicit + 
+                      instrumentalness + liveness + loudness + 
+                      speechiness + tempo + valence, data = spotify_train)
+
+decades_pred <- predict(decade_dtm, spotify_test, type = "class")
+summary(decades_pred)
+confusionMatrix(decades_pred, as.factor(spotify_test$decades))
+```
+
 
 # Danceability Prediction
 Spotify defines danceability as follows:
@@ -281,7 +292,34 @@ CrossTable(x = spotify_pred, y = spotify_test$popularity_bin, prop.chisq=FALSE)
 confusionMatrix(spotify_pred, spotify_test$popularity_bin)
 ```
 
+### log model for hit class (mega-hit vs not) 
+```{r}
+log_test_labels <- spotify_test$binary_hit_class
+log_test <- subset(spotify_test, select=-c(binary_hit_class))
+log_train <- subset(spotify_train, select=-c(artists, popularity, year, hit_class))
+log_model <- train(binary_hit_class ~ ., data = log_train, method = "glm", family="binomial")
+summary(log_model)
+```
+
+#### Evaluate Log Model
+```{r}
+pred <- predict(log_model, log_test)
+confusionMatrix(pred, log_test_labels)
+```
+
 ### KNN
+```{r}
+knn_train <- subset(log_train, select=-c(decades, key))
+knn_test <- subset(log_test, select=-c(artists, popularity, year, decades, hit_class, key))
+knn_train <- as.data.frame(lapply(knn_train[1:(ncol(knn_train)-1)], normalize))
+knn_test <- as.data.frame(lapply(knn_test[1:ncol(knn_test)], normalize))
+knn_model_pred <- knn(train=knn_train, test=knn_test, cl=log_train$binary_hit_class, k=379)
+```
+
+#### Evaluate KNN Model
+```{r}
+confusionMatrix(knn_model_pred, log_test_labels)
+```
 
 ## Holding artist constant, what makes a song popular?
 
