@@ -214,7 +214,7 @@ eighties_log <- glm(eighties ~ acousticness + danceability + duration_ms + energ
 summary(eighties_log)
 
 eighties_pred_log <- predict(eighties_log, eighties_test, type = "response")
-eighties_pred_log <- ifelse(eighties_pred_log > .5, 1, 0)
+eighties_pred_log <- ifelse(eighties_pred_log > .23, 1, 0)
 summary(eighties_pred_log)
 confusionMatrix(as.factor(eighties_pred_log), as.factor(eighties_test$eighties))
 ```
