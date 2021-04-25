@@ -17,6 +17,7 @@ spotify <- read.csv("data.csv")
 
 spotify <- subset(spotify, select = -c(id, name, release_date))
 spotify$artists <- as.factor(spotify$artists)
+spotify$key <- as.factor(spotify$key)
 str(spotify)
 summary(spotify)
 ```
@@ -129,5 +130,47 @@ spotify$hit_class <- as.factor(spotify$hit_class)
 ```
 ```{r}
 library(C50)
+```
+
+```{r "Song Popularity"}
+# Superhit vs not superhit classification with log model and knn
+spotify$binary_hit_class <- ifelse(spotify$hit_class == "mega-hit", 1, 0)
+spotify$binary_hit_class <- as.factor(spotify$binary_hit_class)
+log_train <- spotify[-test_set,]
+log_test <- spotify[test_set,]
+log_test_labels <- log_test$binary_hit_class
+log_test <- subset(log_test, select=-c(binary_hit_class))
+log_train <- subset(log_train, select=-c(artists, popularity, year, hit_class))
+log_model <- train(binary_hit_class ~ ., data = log_train, method = "glm", family="binomial")
+summary(log_model)
+```
+
+```{r}
+pred <- predict(log_model, log_test)
+```
+
+
+```{r}
+confusionMatrix(pred, log_test_labels)
+```
+```{r knn for popularity}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+#Applying normalization function to all columns except the response variable
+knn_train <- subset(log_train, select=-c(decades))
+knn_test <- subset(log_test, select=-c(artists, popularity, year, decades, hit_class))
+knn_train <- as.data.frame(lapply(knn_train[1:(ncol(knn_train)-1)], normalize))
+knn_test <- as.data.frame(lapply(knn_test[1:ncol(knn_test)], normalize))
+```
+
+```{r}
+#sqrt nrows = 379
+knn_model_pred <- knn(train=knn_train, test=knn_test, cl=log_train$binary_hit_class, k=379)
+```
+
+```{r}
+confusionMatrix(knn_model_pred, log_test_labels)
 ```
 
