@@ -9,6 +9,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 # Objective
+This analysis is of interest to members of the Powerlifting and general strength sports community.
+
+Powerlifting is a sport in which competitors compete to lift the most weight for their class in three separate barbell lifts: the Squat, Bench, and Deadlift. In this report, we will apply analytical methods to examine strength and yield some insights into the underpinnings of strength.
+
+Intended Audience: Members of the powerlifting community: Federation Administrators, Coaches, Competitors, Strength Gym Owners, Powerlifting Gamblers, and Strength sport enthusiasts
+Overarching Objective: Predict Strength
+Underlying Objective 1 (for all audiences): Recognize which lifter and meet attributes are correlated to strength and success in meet lift attempts
+Underlying Objective 2 (for competitors and their coaches): Select a federation that fits your goals, 
+Data: Competitor data from powerlifting meets included in the OpenPowerlifting database as of April 2019. OpenPowerlifting is creating a public-domain archive of powerlifting history. 
+Procedure: 
+
+1. Descriptive Analytics: How does powerlifting performance vary across gender, age, and weight-based classes? Among the strongest lifters (adjusted for differences in gender, age, and weight), what are the key trends in equipment selection, drug testing, federation association, and meet event? Have lifters gotten stronger over the years? For regular competitors, what are the general strategies in weight jumps across attempts? Texas is a stronghold for Powerlifting - how do Texan lifters stack up against the overall data of lifters in terms of lifter profile and meet performance?
+2. Predictive Analytics: Can we use the percent increase between attempts to predict whether the lifter will have a failed or succeeded attempt?  Can we look at trends behind weight jumps and estimate what percent increase the lifter will attempt from Attempt 2 to Attempt 3?**  Can we predict a lifter's best Squat or best Deadlift? 
+3. Prescriptive Analytics: Should federations enforce drug testing? To maximize lift total without failing the next lift attempt, what is the optimal % jump in weight that a lifter should attempt?
+
+Finally, we will identify several business management applications for the insights presented in this analysis.
+
+
+
 
 # Data Preparation
 
