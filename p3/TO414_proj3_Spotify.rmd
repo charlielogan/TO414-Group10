@@ -19,7 +19,7 @@ spotify <- read.csv("data.csv")
 str(spotify)
 #summary(spotify)
 
-audio_features <- read.csv("tracks.csv")
+#audio_features <- read.csv("tracks.csv")
 ```
 ### Libraries
 ```{r}
@@ -195,7 +195,57 @@ sort(table(spotify$artists), decreasing = TRUE)[1:20]
 
 # Decade Prediction
 ## Is the song from the 80s?
+```{r}
+eighties_train <- subset(spotify_train, select = -c(artists, year, hit_class))
+eighties_test <- subset(spotify_test, select = -c(artists, year, hit_class))
+summary(eighties_train)
+summary(eighties_test)
+eighties_train$eighties <- ifelse(eighties_train$decades == "80s", 1, 0)
+eighties_test$eighties <- ifelse(eighties_test$decades == "80s", 1, 0)
+```
+
+```{r}
+
+eighties_log <- glm(eighties ~ acousticness + danceability + duration_ms + energy + explicit + 
+                      instrumentalness + liveness + loudness + mode + 
+                      speechiness + tempo + key + instrumentalness*danceability + 
+                      duration_ms*acousticness + duration_ms*valence + duration_ms*valence + danceability*instrumentalness, 
+                    data = eighties_train, family = "binomial")
+summary(eighties_log)
+
+eighties_pred_log <- predict(eighties_log, eighties_test, type = "response")
+eighties_pred_log <- ifelse(eighties_pred_log > .23, 1, 0)
+summary(eighties_pred_log)
+confusionMatrix(as.factor(eighties_pred_log), as.factor(eighties_test$eighties))
+```
+
+```{r}
+
+library(C50)
+
+eighties_dtm <- C5.0(as.factor(eighties) ~ acousticness + danceability + duration_ms + energy + explicit + 
+                      instrumentalness + liveness + loudness + mode + 
+                      speechiness + tempo + key + instrumentalness*energy + 
+                      duration_ms*acousticness + duration_ms*valence + duration_ms*valence + danceability*instrumentalness, data = eighties_train)
+
+
+eighties_pred_dt <- predict(eighties_log, eighties_test, type = "response")
+eighties_pred_dt <- ifelse(eighties_pred_dt > .5, 1, 0)
+confusionMatrix(as.factor(eighties_pred_dt), as.factor(eighties_test$eighties))
+
+```
+
 ## Which decades are easiest to predict?
+```{r}
+decade_dtm <- C5.0(decades ~ acousticness + danceability + duration_ms + energy + explicit + 
+                      instrumentalness + liveness + loudness + 
+                      speechiness + tempo + valence, data = spotify_train)
+
+decades_pred <- predict(decade_dtm, spotify_test, type = "class")
+summary(decades_pred)
+confusionMatrix(decades_pred, as.factor(spotify_test$decades))
+```
+
 
 # Danceability Prediction
 Spotify defines danceability as follows:
