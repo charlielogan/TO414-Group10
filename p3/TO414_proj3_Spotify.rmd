@@ -1,0 +1,245 @@
+---
+title: 'TO414 Project 3: Spotify'
+author: "Ankita Mohapatra"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Objective
+
+# Data Preparation
+
+## Pull & View Main Data
+```{r}
+spotify <- read.csv("data_o.csv")
+#spotify_by_artist <- read.csv("data_by_artist.csv")
+str(spotify)
+#summary(spotify)
+
+audio_features <- read.csv("tracks.csv")
+```
+### Libraries
+```{r}
+packages <- c("dplyr", "class", "caret", "gmodels", "C50")
+lapply(packages, require, character.only = TRUE)
+```
+
+### Data Manipulation
+Main Data
+```{r}
+spotify <- subset(spotify, select = -c(id, name, release_date))
+spotify$artists <- as.factor(spotify$artists)
+spotify$key <- as.factor(spotify$key)
+```
+
+Spotify Main Set
+```{r}
+# Cut year into bins by decade
+spotify$decades <- cut(spotify$year, breaks = c(0,1929, 1939, 1949, 1959, 1969, 1979, 1989, 1999, 2009, 2019, Inf), labels = c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"))
+
+
+# Classify popularity into bins by 75% and 90% percentiles
+popularity_threshold <- 42
+quantile(spotify$popularity, probs=seq(.1, .9, by = .1))
+spotify$hit_class <- ifelse(spotify$popularity >= 56, "mega-hit", ifelse(spotify$popularity > popularity_threshold, "hit", "not hit"))
+spotify$hit_class <- as.factor(spotify$hit_class)
+table(spotify$hit_class)
+```
+
+Audio Features
+```{r}
+audio_features$release_year <- substr(audio_features$release_date,1,4)
+audio_features$release_year <- as.numeric(audio_features$release_year)
+audio_features$key <- as.factor(audio_features$key)
+boxplot(audio_features$release_year, horizontal = T, main = "Year of Song Release")
+audio_features <- subset(audio_features, select = -c(id, name, popularity, artists, id_artists, release_date))
+```
+```{r}
+audio_features <- audio_features %>%
+  select(danceability,everything())   #bring `danceability` to first column
+```
+
+## Normalized Sets
+Normalize method
+```{r}
+normalize <- function(x){
+  return ((x-min(x))/(max(x)-min(x)))
+}
+  
+set.seed(1234)
+```
+
+### Spotify set
+
+### Audio Features set
+```{r}
+audio_featuresMM <- as.data.frame(model.matrix(~.-1,audio_features))  #all columns are numeric
+audio_featuresN<- lapply(audio_featuresMM,normalize) #apply normalize() to all columns
+audio_featuresN <- as.data.frame(audio_featuresN)
+```
+
+## Test & Train
+Un-normalized Train & Test Sets
+```{r}
+test_set <- sample(1:nrow(spotify), 30000)
+spotify_train <- spotify[-test_set, ]
+spotify_test <- spotify[test_set, ]
+
+```
+
+Normalized Train & Test Sets
+```{r}
+#audio_features
+audio_train <- audio_featuresN[-test_set,]
+audio_test <- audio_featuresN[test_set,]
+
+#Response / Labels
+audio_train_labs <- audio_featuresN[-test_set,"danceability"]
+audio_test_labs <- audio_featuresN[test_set,"danceability"]
+```
+
+
+# General Music Attributes
+## By Decade
+```{r}
+ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = popularity, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = valence, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = danceability, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = explicit, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = decades, y = duration_ms, fill=decades)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+The graphs show us very interesting trends through the decades. There is a trend towards more loud, high tempo, exlicit, and dancible songs. It also shows that people on Spotify listen to music from the 90's and 2000's the most. 
+
+## By Popularity
+```{r}
+hist(spotify$popularity)
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = danceability, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = energy, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = speechiness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+```{r}
+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+
+Based on the graphs above, we can see that mega-hits typically have higher dancibility, energy, explicitness, and tempo BUT lower acousticness, instrumentalness, liveness, loudness, mode, and valence.
+```{r}
+sort(table(spotify$artists), decreasing = TRUE)[1:20]
+```
+
+
+# Decade Prediction
+## Is the song from the 80s?
+## Which decades are easiest to predict?
+
+# Danceability Prediction
+Spotify defines danceability as follows:
+``Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity.
+A value of 0.0 is least danceable and 1.0 is most danceable.''
+
+(This was the first model we ran together)
+```{r}
+dance_model <- lm(danceability ~ tempo + valence + speechiness + 
+                    mode + liveness + key + instrumentalness + 
+                    explicit + energy + duration_ms + acousticness, data = spotify)
+summary(dance_model)
+```
+
+By running regression models on the audio features dataset, we can try to predict to what extent the danceability algorithm incorporates the various elements such as those mentioned in the definition above.
+
+```{r}
+dm1 <- lm(danceability ~ ., data = audio_train)
+```
+
+
+### ANN
+
+# Popularity Prediction
+## What makes a song popular?
+### Linear
+```{r}
+spotify_lin <- lm(popularity ~ valence + speechiness + 
+                    mode + liveness + key + instrumentalness + 
+                    explicit + energy + duration_ms + danceability + acousticness, data = spotify)
+summary(spotify_lin)
+```
+### Log
+```{r}
+spotify_log <- glm(popularity_bin ~ valence + speechiness + 
+                    liveness + instrumentalness + 
+                    energy + duration_ms + danceability + acousticness,
+                   data = spotify_train, family = "binomial")
+summary(spotify_log)
+spotify_pred <- predict(spotify_log, newdata = spotify_test, type = "response")
+spotify_pred <- ifelse(spotify_pred >  popularity_threshold/100, 1, 0)
+summary(spotify_pred)
+CrossTable(x = spotify_pred, y = spotify_test$popularity_bin, prop.chisq=FALSE)
+confusionMatrix(spotify_pred, spotify_test$popularity_bin)
+```
+
+### KNN
+
+## Holding artist constant, what makes a song popular?
+
+# Conclusion
