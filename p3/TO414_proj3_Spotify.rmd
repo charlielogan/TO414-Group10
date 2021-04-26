@@ -121,86 +121,71 @@ audio_test_labs <- audio_featuresN[test_set,"danceability"]
 
 # General Music Attributes
 ## By Decade
-```{r}
-ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
+First, we wanted to see what kind of music is most popular on spotify.
+
 ```{r}
 ggplot(spotify, aes(x = decades, y = popularity, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
+
+The most listened to songs are from the 90s and 2000s. This makes sense since that is the generation that started being comfortable with new technology, and also that music has been on the platform longer than the music from 2010s or 2020s. We predict that people that listen to older music might listen to it in different forms (i.e. CDs, records, tapes, etc.). Next, we wanted to look at the different audio features over the decades.
+
 ```{r}
-ggplot(spotify, aes(x = decades, y = valence, fill=decades)) + 
+ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
 ggplot(spotify, aes(x = decades, y = danceability, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
-```{r}
-ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
+There is a trend in these graphs where the features start out at a certain point in the 20s and then drop down in the 30s-50s, and then increase rather steadily. Our team theorized that this may be due to the Great Depression and prohibition happening at the beginning of the 30s that caused this turn in culture.
+
 ```{r}
 ggplot(spotify, aes(x = decades, y = explicit, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
+We were surprised at the graph showing the trends in explicitness because they varied so much and the average seems to be really high for the 20s. We think this is because there is a much smaller number of songs from the 20s in this data set. It dropped off to almost 0 in the 60s and 70s, and then shot up with the prevalence of rock and hip hop.
 ```{r}
-ggplot(spotify, aes(x = decades, y = duration_ms, fill=decades)) + 
+ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
-The graphs show us very interesting trends through the decades. There is a trend towards more loud, high tempo, exlicit, and dancible songs. It also shows that people on Spotify listen to music from the 90's and 2000's the most. 
+Finally, we looked at the loudness. 
+```{r}
+summary(spotify)
+quantile(spotify$popularity, probs=seq(.1, .9, by = .1))
+spotify$hit_class <- ifelse(spotify$popularity >= 56, "mega-hit", ifelse(spotify$popularity > 42, "hit", "not hit"))
+spotify$hit_class <- as.factor(spotify$hit_class)
+```
 
 ## By Popularity
-```{r}
-hist(spotify$popularity)
-```
+Next, we wanted to see how the audio features differ across our three classes of popularity: not a hit, hit, and mega hit.
 ```{r}
 ggplot(spotify, aes(x = hit_class, y = danceability, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = energy, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = energy, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
+
 ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = speechiness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-```
-```{r}
-ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
 
-Based on the graphs above, we can see that mega-hits typically have higher dancibility, energy, explicitness, and tempo BUT lower acousticness, instrumentalness, liveness, loudness, mode, and valence.
+In the previous graphs, we see that mega hit has the highest mean for danceability, energy, explicitness, and tempo. While there are other factors that determine popularity, such as artist recognition, we can see that high values in these factors is correlated with popularity.
+
+In the following graphs, we see a similar trend but in the opposite direction. Mega hits have the lowest averages for acousticness, instrumentalness, liveness, mode, loudness, and valence. 
+
+```{r}
+ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+
+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+
+ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
+```
+
+Finally, we also wanted to look at the artists with the most songs in the dataset.
 ```{r}
 sort(table(spotify$artists), decreasing = TRUE)[1:20]
 ```
