@@ -267,7 +267,7 @@ quantile(audio_features$danceability, probs = c(.7,.71,.72,.75))   #Score of 6.7
 
 
 ### Train and Test Sets for Tracks
-First we will parse the `audio_featuresN` into a train and test set.
+Use same test indexes for the track dataset
 __Train & Test Sets for the Danceability Prediction__
 ```{r}
 #audio_features
@@ -288,6 +288,7 @@ The adjusted r^2 is only .45, even though most of the explanatory variables appe
 ```{r dance_step, cache=T}
 step_dm1 = step(dm1, type = "both") 
 ```
+
 The `step` function leaves the following significant relation:
 
 `step_dm1`:
