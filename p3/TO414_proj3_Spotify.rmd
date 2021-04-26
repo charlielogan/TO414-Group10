@@ -91,12 +91,6 @@ normalize <- function(x){
 
 ### Spotify set
 
-### Audio Features set
-```{r}
-audio_featuresMM <- as.data.frame(model.matrix(~.-1,audio_features))  #all columns are numeric
-audio_featuresN<- lapply(audio_featuresMM,normalize) #apply normalize() to all columns
-audio_featuresN <- as.data.frame(audio_featuresN)
-```
 
 ## Test & Train
 Un-normalized Train & Test Sets
@@ -253,23 +247,135 @@ barplot(fifties_preds, main="Decision Tree Predictions for Songs made in the 50s
 For example, for all 50s songs, our model accurately predicted 1121 of them. One decade away from the 50s is the 40s and 60s, which recieved 598 and 579 predictions respectively. The general trend is the further away in time a decade is from a songs true decade, the less likely our model is to incorrectly classify it into that decade. this relates back to my comments above about change in music not being discrete but continuous. Songs from the 50s and 60s will sound  more alike than songs from the 50s and 90s, and our model is picking up on that. There are many similarities between the musical decades, and music waves and changes don't necessarily line up with the end of a decade and the start of a new one. That's why its interestign to see and interpret our models results in a histogram rather than just as a binary correct or incorrect prediction.
 
 # Danceability Prediction
+
+__What is danceability?__
 Spotify defines danceability as follows:
 ``Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity.
 A value of 0.0 is least danceable and 1.0 is most danceable.''
 
-(This was the first model we ran together)
+## Description of Data and Procedure
+
+The audio features dataset contains a combination of objective and subjective musical attributes.
+
+Objective attributes of a musical track which are available in this dataset include:
+
+* `key` the major key of the track, where each number corresponds to a unique key
+* `loudness` average volume of the track in decibels
+* `mode` major or minor classification
+* `duration` time duration of the track in milliseconds
+* `release_year` of the album containing this track
+* `tempo` of the track in beats per minute (BPM)
+
+Subjective attributes of a musical track which are available in this dataset, calculated in function of other measured properties, include:
+
+* `danceability` the track's suitability for dancing, on a 0-1 scale
+* `energy` how energetic the track is, on a 0-1 scale
+* `valence` how positive/cheerful the music is, on a 0-1 scale
+* `acousticness` how acoustic the song is, on a 0-1 scale
+
+Finally, there are some variables which have used a [likely subjective] algorithm to describe objective attributes, resulting in a debatable classification:
+
+* `liveness` presence of audience, audible in the track, on a 0-1 scale
+* `instrumentalness` ratio of instrumental sounds throughout track, on a 0-1 scale
+* `speechiness` ratio of spoken words
+* `time_signature` predicted time signature of the track
+
+
+In this analysis we will run linear running regression models on the audio features train data to predict to what extent the danceability algorithm incorporates various elements of musicality, including those self-reported in Spotify's danceability definition, as well as other objective and subjective attributes available to our analysis.
+
+### Limitations
+
+It is important to note that there is an inherent limitation in predictive power when subjective variables are used due to bias and reliance on imperfect algorithms. That is, there is no human music assessor who is individually ranking Spotify's wealth of streamable music for perceived `danceability`. Rather, `danceability` as a variable in the Spotify API represents Spotify developers' algorithm's best attempt at predicting danceability based on the criteria which they consider most important to making music suitable for dancing, such as tempo and beat regularity. The algorithm does not necessarily output the same `danceability` rating had the developers individually listened to the track and assigned it a danceability score.
+\n
+Therefore, while the concept of measuring subjective attributes such as danceability is intellectually attractive for use cases such as allowing users to filter music, improving recommendation algorithms, and pre-populating automated playlists, these measurements are imperfect. For instance [this Quora post](https://www.quora.com/How-does-Spotify-calculate-the-danceability-of-a-song) written by pianist Juan Maria Solare links to [this dreamy minimal piano solo](https://play.spotify.com/track/2I97NDZU4o16A1nP9zgMah) which may not be easily danceable for most audiences, yet is ranked by Spotify as a 6.7/10 for `danceability`, sitting at the 71st percentile within the `danceability` distribution:
 ```{r}
-dance_model <- lm(danceability ~ tempo + valence + speechiness + 
-                    mode + liveness + key + instrumentalness + 
-                    explicit + energy + duration_ms + acousticness, data = spotify)
-summary(dance_model)
+#Look at danceability distribution in `audio_features`
+boxplot(audio_features$danceability, horizontal=T, main="Danceability Distribution")
+quantile(audio_features$danceability, probs = c(.7,.71,.72,.75))   #Score of 6.7 falls at ~71st percentile
 ```
 
-By running regression models on the audio features dataset, we can try to predict to what extent the danceability algorithm incorporates the various elements such as those mentioned in the definition above.
 
+### Train and Test
+First we will parse the `audio_featuresN` into a train and test set.
+__Train & Test Sets for the Danceability Prediction__
 ```{r}
+### Audio Features set
+audio_featuresMM <- as.data.frame(model.matrix(~.-1,audio_features))  #all columns are numeric
+audio_featuresN<- lapply(audio_featuresMM,normalize) #apply normalize() to all columns
+audio_featuresN <- as.data.frame(audio_featuresN)  #This is a normalized set, if needed
+
+
+#audio_features
+audio_train <- audio_features[-test_set,]
+audio_test <- audio_features[test_set,]
+#Response / Labels
+audio_train_labs <- audio_features[-test_set,"danceability"]
+audio_test_labs <- audio_features[test_set,"danceability"]
+```
+## Linear Danceability Prediction
+```{r dm1}
 dm1 <- lm(danceability ~ ., data = audio_train)
+summary(dm1)
 ```
+The adjusted r^2 is only .45, even though most of the explanatory variables appear to be highly significant. To get a better sense of the high error residuals, we can plot some residuals after removing any insignificant variables with the `step()` function.
+
+
+```{r dance_step, cache=T}
+step_dm1 = step(dm1, type = "both") 
+```
+The `step` function leaves the following significant relation:
+
+`step_dm1`:
+danceability ~ duration_ms + explicit + energy + key0 + key1 + 
+    key2 + key3 + key4 + key5 + key7 + key9 + key10 + loudness + 
+    mode + speechiness + acousticness + instrumentalness + liveness + 
+    valence + tempo + time_signature + release_year
+    
+
+
+How well does `step_dm1` predict danceability score?
+
+
+```{r}
+
+# Apply   step_dm1` to test set
+step_dm1_results <- predict(step_dm1,newdata = audio_test, type="response")
+
+# Calculate errors between danceability predictions and test labels
+step_dm1_error <- audio_test_labs - step_dm1_results
+step_dm1_test_RMSE <- sqrt(mean(step_dm1_error^2))  # RSME = 0.126
+step_dm1_test_r2 <- R2(step_dm1_results,audio_test_labs,form="traditional")  #R^2 = 0.456
+step_dm1_test_MAE <- MAE(step_dm1_results,audio_test_labs) # MAE=0.101
+step_dm1_test_MSE <- mean((step_dm1_error)^2) #MSE = 0.016
+
+step_dm1_error_table <- matrix(c(step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,step_dm1_test_r2),ncol=4,byrow=T)
+colnames(step_dm1_error_table) <- c("MSE", "MAE", "RSME", "R-squared")
+rownames(step_dm1_error_table) <- c("step_dm1")
+step_dm1_error_table <- as.table(step_dm1_error_table)
+
+step_dm1_error_table
+
+barplot(step_dm1_error_table[,c(1:3)],legend=F,beside=T,main='Summary Statistics for step_dm1 Prediction')   #Make legend=T after adding more regressions
+```
+__Interpret the error metrics__
+
+
+If we recall, Spotify included music elements such as musical elements including tempo, rhythm stability, beat strength, and overall regularity. Therefore, we would expect a very high correlation between corresponding available explanatory variables, such as `tempo`. Let's quantify the correlation between `tempo` and `danceability`.
+```{r}
+dm2 <- ggplot(data=audio_train, aes(x=tempo, y=danceability)) + geom_point()
+dm2
+
+```
+This chart takes a very interesting appearance, with a clear quadratic interaction (as danceability peaks around medium-tempo). However the data has a large variance.
+
+
+
+plotting residuals
+
+#Consider interaction terms
+ex. speechiness & valence, tempo quadratic term
+
+
 
 # Popularity Prediction
 ## What Makes a Song Popular?
