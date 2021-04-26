@@ -160,9 +160,7 @@ Next, we wanted to see how the audio features differ across our three classes of
 ```{r}
 ggplot(spotify, aes(x = hit_class, y = danceability, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = energy, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-
-ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
@@ -174,9 +172,7 @@ In the following graphs, we see a similar trend but in the opposite direction. M
 ```{r}
 ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
-
-ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
 
