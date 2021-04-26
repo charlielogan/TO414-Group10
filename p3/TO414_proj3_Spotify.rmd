@@ -10,25 +10,18 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 # Objective
 
-This analysis is of interest to members of the Powerlifting and general strength sports community.
+Data: In this report, we are working with a Spotify dataset, which contains audio features of around 600k songs released in between 1922 and 2021.
 
-Powerlifting is a sport in which competitors compete to lift the most weight for their class in three separate barbell lifts: the Squat, Bench, and Deadlift. In this report, we will apply analytical methods to examine strength and yield some insights into the underpinnings of strength.
+Intended Audience: Music producers, artists, advertisers
+Overarching Objective: Predict Danceability, Predict Popularity, Predict if a Song is from a Particular Decade (80’s)
+Underlying Objective 1 (for music producers and artists): Recognize which aspects correlate to popularity and creating mega hits
+Underlying Objective 2 (for Spotify): Help create automatic classification in recommendation algorithms and creating playlists (based on decade for example)
+Underlying Objective 3 (for advertisers): Recognize what kind of music works best 
 
-Intended Audience: Members of the powerlifting community: Federation Administrators, Coaches, Competitors, Strength Gym Owners, Powerlifting Gamblers, and Strength sport enthusiasts
-Overarching Objective: Predict Strength
-Underlying Objective 1 (for all audiences): Recognize which lifter and meet attributes are correlated to strength and success in meet lift attempts
-Underlying Objective 2 (for competitors and their coaches): Select a federation that fits your goals, 
-Data: Competitor data from powerlifting meets included in the OpenPowerlifting database as of April 2019. OpenPowerlifting is creating a public-domain archive of powerlifting history. 
-Procedure: 
+1. Descriptive Analytics: How do audio features differ across decades? How do audio features differ by popularity? 
+2. Predictive Analytics: Can we predict danceability? Can we predict popularity? Can we predict if a song is from a particular decade?
 
-1. Descriptive Analytics: How does powerlifting performance vary across gender, age, and weight-based classes? Among the strongest lifters (adjusted for differences in gender, age, and weight), what are the key trends in equipment selection, drug testing, federation association, and meet event? Have lifters gotten stronger over the years? For regular competitors, what are the general strategies in weight jumps across attempts? Texas is a stronghold for Powerlifting - how do Texan lifters stack up against the overall data of lifters in terms of lifter profile and meet performance?
-2. Predictive Analytics: Can we use the percent increase between attempts to predict whether the lifter will have a failed or succeeded attempt?  Can we look at trends behind weight jumps and estimate what percent increase the lifter will attempt from Attempt 2 to Attempt 3?**  Can we predict a lifter's best Squat or best Deadlift? 
-3. Prescriptive Analytics: Should federations enforce drug testing? To maximize lift total without failing the next lift attempt, what is the optimal % jump in weight that a lifter should attempt?
-
-Finally, we will identify several business management applications for the insights presented in this analysis.
-
-
-
+Finally, we will identify several applications for the insights presented in this analysis.
 
 # Data Preparation
 
@@ -217,12 +210,11 @@ sort(table(spotify$artists), decreasing = TRUE)[1:20]
 ## Is the song from the 80s?
 ```{r}
 eighties_train <- subset(spotify_train, select = -c(artists, year, hit_class))
-eighties_test <- subset(spotify_test, select = -c(artists, year, hit_class))
-summary(eighties_train)
-summary(eighties_test)
 eighties_train$eighties <- ifelse(eighties_train$decades == "80s", 1, 0)
 eighties_test$eighties <- ifelse(eighties_test$decades == "80s", 1, 0)
 ```
+First We prepared the train and test data for the 80s prediction test. We removed certain columns from the data set that were irrelevant or dependent on a songs release decade such as artists, year, and hit_class. We then added a boolean column to the data sets indicating whether the song was released in the 1980s or not.
+
 
 ```{r}
 
@@ -238,22 +230,24 @@ eighties_pred_log <- ifelse(eighties_pred_log > .23, 1, 0)
 summary(eighties_pred_log)
 confusionMatrix(as.factor(eighties_pred_log), as.factor(eighties_test$eighties))
 ```
+First we constructed a Logistic Regression to predict whether a song was released in the 80s. The regression resulted in an accuracy of 83.93% and a Kappa value of .2623. The model has many false negatives and false positives and doesn't seem to do a great job distinguishing between 80s music and other decades. Our model suggests that 80s songs have less acousticness, more instrumentals, are more danceable, and have high energy. They also tend to have a faster tempo.
+
+One qualifying factor is that music progression and change isn't discrete even though we are trying to classify music into discrete buckets. For example, a song released in 1979 is likely to sound like a song released in 1980 despite being from a different decade. Additionally, I made the threshold for the log odds value needed to be classified as a 80s song .23 because it maximized the Kappa value for the model. The lower threshold value makes sense because any given song is much more likely to not be from the 80s, so our model has trouble indicating with higher certainty that a song is from the 80s.
 
 ```{r}
 
 library(C50)
-
+error_costs = matrix(c(0, 1, 2, 0), nrow = 2)
 eighties_dtm <- C5.0(as.factor(eighties) ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + mode + 
-                      speechiness + tempo + key + 
-                      +valence, data = eighties_train)
+                      speechiness + tempo + key, data = eighties_train, costs = error_costs)
 
 
-
-eighties_pred_dt <- predict(eighties_dtm, eighties_test, type = "class")
+eighties_pred_dt <- predict(eighties_dtm, eighties_test)
 confusionMatrix(as.factor(eighties_pred_dt), as.factor(eighties_test$eighties))
 
 ```
+Our decision tree model performed slightly better than our logistc regression model. The decision tree has an accuracy of 85.69% and a Kappa value of .2643. Because there are many more non 80s songs than 80s, I added a cost matrix to encouraget the decision tree to minimize false negative responses.
 
 ## Which decades are easiest to predict?
 ```{r}
@@ -265,7 +259,17 @@ decades_pred <- predict(decade_dtm, spotify_test, type = "class")
 summary(decades_pred)
 confusionMatrix(decades_pred, as.factor(spotify_test$decades))
 ```
+The decision tree performed decently well considering how many classes there are and the difficulties in predcting a song's release decade. The model has an accuracy of 34.75% and a Kappa value of .2724. Its interesting to look along the diagnol in the confusion matrix and see that for any given decade of music, the decision tree model predicted the correct decade more than any other individual decade. This indicated that the model is catching onto the trends and differences in music by decade. 
 
+It's also interesting to look at how the decision tree is more likely to mistake a songs decade with an adjacent decade than one further away in time. 
+```{r}
+fifties_preds <- c(124, 298, 598, 1121, 579, 236, 131, 153, 63, 153, 19)
+
+barplot(fifties_preds, main="Decision Tree Predictions for Songs made in the 50s",
+        xlab="Predicted Decade", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"))
+```
+
+For example, for all 50s songs, our model accurately predicted 1121 of them. One decade away from the 50s is the 40s and 60s, which recieved 598 and 579 predictions respectively. The general trend is the further away in time a decade is from a songs true decade, the less likely our model is to incorrectly classify it into that decade. this relates back to my comments above about change in music not being discrete but continuous. Songs from the 50s and 60s will sound  more alike than songs from the 50s and 90s, and our model is picking up on that. There are many similarities between the musical decades, and music waves and changes don't necessarily line up with the end of a decade and the start of a new one. That's why its interestign to see and interpret our models results in a histogram rather than just as a binary correct or incorrect prediction.
 
 # Danceability Prediction
 Spotify defines danceability as follows:
