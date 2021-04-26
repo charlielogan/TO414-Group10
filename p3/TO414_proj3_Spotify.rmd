@@ -126,24 +126,21 @@ ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) +
 ggplot(spotify, aes(x = decades, y = danceability, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
-There is a trend in these graphs where the features start out at a certain point in the 20s and then drop down in the 30s-50s, and then increase rather steadily. Our team theorized that this may be due to the Great Depression and prohibition happening at the beginning of the 30s that caused this turn in culture.
+
+The previous graphs show a trend where the audio features start out at a certain point in the 20s and then drop down in the 30s-50s, and then increase rather steadily. Our team theorized that this may be due to the Great Depression and prohibition happening at the beginning of the 30s that caused this turn in culture.
 
 ```{r}
 ggplot(spotify, aes(x = decades, y = explicit, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
+
 We were surprised at the graph showing the trends in explicitness because they varied so much and the average seems to be really high for the 20s. We think this is because there is a much smaller number of songs from the 20s in this data set. It dropped off to almost 0 in the 60s and 70s, and then shot up with the prevalence of rock and hip hop.
 ```{r}
 ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
-Finally, we looked at the loudness. 
-```{r}
-summary(spotify)
-quantile(spotify$popularity, probs=seq(.1, .9, by = .1))
-spotify$hit_class <- ifelse(spotify$popularity >= 56, "mega-hit", ifelse(spotify$popularity > 42, "hit", "not hit"))
-spotify$hit_class <- as.factor(spotify$hit_class)
-```
+
+Finally, we looked at the loudness. It is expected to see that loudness increases as time goes on and technology improves, but it was interesting that in 2010s and 2020s it has been getting a little quieter. This may be due to increased health concerns. For example, iPhones will warn you if you are listening to music too loud for too long, and has settings that allow you to limit your volume when you are wearing headphones so you don't damage your ears. 
 
 ## By Popularity
 Next, we wanted to see how the audio features differ across our three classes of popularity: not a hit, hit, and mega hit.
@@ -153,21 +150,21 @@ ggplot(spotify, aes(x = hit_class, y = danceability, fill=hit_class)) +
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
+
+ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
 ```
 
-In the previous graphs, we see that mega hit has the highest mean for danceability, energy, explicitness, and tempo. While there are other factors that determine popularity, such as artist recognition, we can see that high values in these factors is correlated with popularity.
+In the previous graphs, we see that mega hit has the highest mean for danceability, energy, explicitness, tempo, and loudness. While there are other factors that determine popularity, such as artist recognition, we can see that high values in these factors is correlated with popularity.
 
-In the following graphs, we see a similar trend but in the opposite direction. Mega hits have the lowest averages for acousticness, instrumentalness, liveness, mode, loudness, and valence. 
+In the following graphs, we see a similar trend but in the opposite direction. Mega hits have the lowest averages for acousticness, instrumentalness, liveness, mode, and valence. 
 
 ```{r}
-ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
+ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
-
-ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
 
