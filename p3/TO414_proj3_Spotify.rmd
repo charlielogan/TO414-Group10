@@ -594,7 +594,7 @@ knn_model_pred <- knn(train=knn_train, test=knn_test, cl=log_train$binary_hit_cl
 confusionMatrix(knn_model_pred, log_test_labels)
 ```
 
-The KNN model also faired decently well in classifying "mega-hit" songs, having a slightly lower accuracy than the log model at ~90%. Additionally the KNN was less willing to make a mega-hit classification, which is reasonable due to the significantly higher amount of non hits in the data set. The KNN still correctly classified 458/692 "mega-hit" classifications, about 66%. The model improved slightly by dropping K, the threshold for making a classification, to 1/4 of the square root of input rows, which is the typical starting point for a K value. Overall, the logistic model was more successful in completing the task we set out to accomplish in building these models: correctly predict which songs have the potential to become extremely popular. 
+The KNN model also fared decently well in classifying "mega-hit" songs, having a slightly lower accuracy than the log model at ~90%. Additionally the KNN was less willing to make a mega-hit classification, which is reasonable due to the significantly higher amount of non hits in the data set. The KNN still correctly classified 458/692 "mega-hit" classifications, about 66%. The model improved slightly by dropping K, the threshold for making a classification, to 1/4 of the square root of input rows, which is the typical starting point for a K value. Overall, the logistic model was more successful in completing the task we set out to accomplish in building these models: correctly predict which songs have the potential to become extremely popular. 
 
 ## Holding artist constant, what makes a song popular?
 
