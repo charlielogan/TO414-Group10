@@ -17,8 +17,10 @@ knitr::opts_chunk$set(echo = TRUE)
   + Underlying Objective 1 (for music producers and artists): Recognize which aspects correlate to popularity and creating mega hits
   + Underlying Objective 2 (for Spotify): Help create automatic classification in recommendation algorithms and creating playlists (based on decade for example).
   + Underlying Objective 3 (for advertisers): Recognize what kind of music is most popular for advertisers to target intended audiences. 
-\n
+
+
 **Descriptive Analytics:** How do audio features differ across decades? How do audio features differ by popularity? 
+
 **Predictive Analytics:** Can we predict danceability? Can we predict popularity? Can we predict if a song is from a particular decade? Can we find patterns among a single artist's most popular songs?
 
 Finally, we will identify several applications for the insights presented in this analysis.
@@ -152,9 +154,9 @@ ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) +
   geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
-    plot_layout(ncol = 2)
+  ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
 ```
 
 Finally, we also wanted to look at the artists with the most songs in the dataset.
