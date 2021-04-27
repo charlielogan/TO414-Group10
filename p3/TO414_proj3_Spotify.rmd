@@ -604,6 +604,7 @@ The data we have can also be used to predict the popularity of future songs for 
 #Selecting Taylor Swift songs
 ts_data <- spotify %>% filter(artists =="['Taylor Swift']")
 ts_data <- subset(ts_data, select = -c(binary_hit_class, hit_class, decades, artists, year))
+ts_data$mode <- as.factor(ts_data$mode)
 
 ```
 
