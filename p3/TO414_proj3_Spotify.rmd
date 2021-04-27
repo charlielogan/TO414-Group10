@@ -175,7 +175,10 @@ sort(table(spotify$artists), decreasing = TRUE)[1:20]
 
 
 # Decade Prediction
+Music is constantly changing forms and styles throughout the years, and often these changes mirror social and cultural changes within a society. In this section we will explore whether the decade a song was created can be accurately predicted by the style and form of the song. This can help us understand the differentiating factors and the relationships between musical decades. This can be used by recommendation algorithms on Youtube, Spotify, or other music streaming programs. It can be used to introduce listeners to new music from other time periods that may be similar in sounds or feeling to what the user already listens to. Many times music listerners just listen to their contemporaries, but there is plenty of music to explore from the past century. 
+
 ## Is the song from the 80s?
+
 ```{r}
 eighties_train <- subset(spotify_train, select = -c(artists, year, hit_class))
 eighties_test <- subset(spotify_test, select = -c(artists, year, hit_class))
@@ -199,9 +202,9 @@ eighties_pred_log <- ifelse(eighties_pred_log > .23, 1, 0)
 summary(eighties_pred_log)
 confusionMatrix(as.factor(eighties_pred_log), as.factor(eighties_test$eighties))
 ```
-First we constructed a Logistic Regression to predict whether a song was released in the 80s. The regression resulted in an accuracy of 83.93% and a Kappa value of .2623. The model has many false negatives and false positives and doesn't seem to do a great job distinguishing between 80s music and other decades. Our model suggests that 80s songs have less acousticness, more instrumentals, are more danceable, and have high energy. They also tend to have a faster tempo.
+First we constructed a Logistic Regression to predict whether a song was released in the 80s. The regression resulted in an accuracy of 83.93% and a Kappa value of .2623. The model has many false negatives and false positives and doesn't seem to do a great job distinguishing between 80s music and other decades. Our model suggests that 80s songs have less acousticness, more instrumentals, are more danceable, have high energy, and tend to have a faster tempo. This makes sense considering 80s music was the decade electronic dance music was introduced. 
 
-One qualifying factor is that music progression and change isn't discrete even though we are trying to classify music into discrete buckets. For example, a song released in 1979 is likely to sound like a song released in 1980 despite being from a different decade. Additionally, I made the threshold for the log odds value needed to be classified as a 80s song .23 because it maximized the Kappa value for the model. The lower threshold value makes sense because any given song is much more likely to not be from the 80s, so our model has trouble indicating with higher certainty that a song is from the 80s.
+One qualifying factor is that music progression and change isn't discrete even though we are trying to classify music into discrete buckets. For example, a song released in 1979 is likely to sound like a song released in 1980 despite being from a different decade. Additionally, I made the threshold for the log odds value required to be classified as an 80s song .23 because it maximized the Kappa value for the model. The lower threshold value makes sense because any given song is much more likely to not be from the 80s just because there are 9 other decades the song could be from. This causes our model to have trouble indicating with high certainty that a song is from the 80s.
 
 ```{r}
 
@@ -216,9 +219,9 @@ eighties_pred_dt <- predict(eighties_dtm, eighties_test)
 confusionMatrix(as.factor(eighties_pred_dt), as.factor(eighties_test$eighties))
 
 ```
-Our decision tree model performed slightly better than our logistc regression model. The decision tree has an accuracy of 85.69% and a Kappa value of .2643. Because there are many more non 80s songs than 80s, I added a cost matrix to encouraget the decision tree to minimize false negative responses.
+Our decision tree model performed slightly better than our logistc regression model. The decision tree has an accuracy of 85.69% and a Kappa value of .2643. Because there are many more non 80s songs than 80s, I added a cost matrix to encourage the decision tree to minimize false negative responses. Although this model did better, it loses the intepratability that the logistic regression models has. Because of this I think the logistic regression model is more valuable for our purposes.
 
-## Which decades are easiest to predict?
+## Classifying Songs into Every Decade
 ```{r}
 decade_dtm <- C5.0(decades ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + 
@@ -228,17 +231,29 @@ decades_pred <- predict(decade_dtm, spotify_test, type = "class")
 summary(decades_pred)
 confusionMatrix(decades_pred, as.factor(spotify_test$decades))
 ```
-The decision tree performed decently well considering how many classes there are and the difficulties in predcting a song's release decade. The model has an accuracy of 34.75% and a Kappa value of .2724. Its interesting to look along the diagnol in the confusion matrix and see that for any given decade of music, the decision tree model predicted the correct decade more than any other individual decade. This indicated that the model is catching onto the trends and differences in music by decade. 
+The decision tree performed decently well considering how many classes there are and the difficulties in predicting a song's release decade. The model has an accuracy of 34.75% and a Kappa value of .2724. Its interesting to look along the diagonal in the confusion matrix and see that for any given decade of music, the decision tree model predicted the correct decade more than any other individual decade except for 2000s music. This indicated that the model is catching onto the trends and differences in music by decade. 
 
-It's also interesting to look at how the decision tree is more likely to mistake a songs decade with an adjacent decade than one further away in time. 
+It's also interesting to look at how the decision tree is more likely to mistake a song's decade with an adjacent decade than one further away in time. 
 ```{r}
 fifties_preds <- c(124, 298, 598, 1121, 579, 236, 131, 153, 63, 153, 19)
 
 barplot(fifties_preds, main="Decision Tree Predictions for Songs made in the 50s",
-        xlab="Predicted Decade", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"))
+        xlab="Predicted Decade", ylab="Number of Times Classified", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"), col=rgb(.2, .4, .6, .6))
 ```
 
-For example, for all 50s songs, our model accurately predicted 1121 of them. One decade away from the 50s is the 40s and 60s, which recieved 598 and 579 predictions respectively. The general trend is the further away in time a decade is from a songs true decade, the less likely our model is to incorrectly classify it into that decade. this relates back to my comments above about change in music not being discrete but continuous. Songs from the 50s and 60s will sound  more alike than songs from the 50s and 90s, and our model is picking up on that. There are many similarities between the musical decades, and music waves and changes don't necessarily line up with the end of a decade and the start of a new one. That's why its interestign to see and interpret our models results in a histogram rather than just as a binary correct or incorrect prediction.
+For example, for all 50s songs, our model accurately predicted 1121 of them. One decade away from the 50s is the 40s and 60s, which recieved 598 and 579 predictions respectively. The general trend is the further away in time a decade is from a songs true decade, the less likely our model is to incorrectly classify it into that decade. This relates back to my comments above about change in music not being discrete but continuous. Songs from the 50s and 60s will sound  more alike than songs from the 50s and 90s, and our model is picking up on that. There are many similarities between the musical decades, and music waves don't necessarily line up with the end of a decade and the start of a new one. That's why its interesting to see and interpret our models results in a bar graph of all classifications rather than just as a binary correct or incorrect prediction. Suprisingly, our plot above shows a small bump in 2010s. This could indicate that 2010 music has some similarities to 1950s music, or at least more similarities than the 2000s and 2020s do to the 1950s. This is an example where Spotify can recommend some 50s music to someone who listens to a lot of music from the 2010s.
+
+
+We can look at songs released in the 2000s and see how the decision tree struggled with predicting 2000s songs accurately. The model often mistook 2000s songs for other decades' songs. This leads me to believe that the 2000s didn't have a defining sound to their music and was a combination of many other decades' sounds.
+```{r}
+two_thous_preds <- c(8, 21, 50, 94, 145, 224, 230, 390, 513, 538, 68)
+
+barplot(two_thous_preds, main="Decision Tree Predictions for Songs made in the 2000s",
+        xlab="Predicted Decade",  ylab="Number of Times Classified", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"), col=rgb(.2, .4, .6, .6))
+```
+
+A possible prediction is that the 2000s was a transitional period for music. On the way out was 90s music and on the way in was 2010's music style. This can be substantiated by the high classifications of 2000s music into the 90s and 2010s. In fact, for all 2000s music, 538 songs were wrongly predicted to be from the 2010s and only 513 songs were accurately predicted as the 2000s.This sort of information can be valuable to a recommendation system because it suggests that someone who listens to 2000s music doesn't have a specifically unique taste and might like variety in their music choices. This can be compared to someone who listens to 50s music, which our model suggests is more differentiated from other decades' music, and might not like as much variety in their music.
+
 
 # Danceability Prediction
 
@@ -488,3 +503,5 @@ Above is the confusion matrix for the Decision Tree model. It has an accuracy of
 The record label can use the insights gained from the linear regression model and the logistic regression model to tailor the songs to increase the likelihood of popularity. However, since the decision tree model has better accuracy of (90% vs 85%), they can use that model to predict the likelihood of popularity of Taylor Swift's future songs. Using the models to release songs that are more likely to be popular will increase the royalties (i.e., revenue) generated by the songs.
 
 # Conclusion
+
+In conclusion, the decades exploration part of our report was an interesting dive into the similarities and differences between musical forms throughout the decades. Our model suggests that classifying whether a song is from a particular decade or not is difficult. This makes sense because musical waves can come and go in larger and shorter spans than a decade. When we ran a decision tree model and tried to classify songs into every decade, this hypothesis was substantiated due to the high number of misclassifications into adjacent decades (e.g. 40s and 60s are adjacent to the 50s). Through this decision tree model we were able to see which decades of music were particularly unique because they were classified more easily, and which decades were more free form or transitional decades because of their low accuracy
