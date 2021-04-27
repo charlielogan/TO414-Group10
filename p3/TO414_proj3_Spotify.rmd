@@ -1,6 +1,6 @@
 ---
 title: 'TO414 Project 3: Spotify'
-author: "Ankita Mohapatra"
+author: "Ankita Mohapatra, Jonathan Demeter, Charlie Logan, Nikita Mehendale, Srishti Senthil"
 date: "4/23/2021"
 output: html_document
 ---
@@ -368,7 +368,7 @@ __So, how well does `step_dm1` predict danceability score?__
 
 ```{r}
 # Apply   `step_dm1` to test set
-step_dm1_results <- predict(step_dm1,newdata = audio_testMM, type="response")
+step_dm1_results <- predict(step_dm1,newdata = audio_test, type="response")
 
 # Calculate errors between danceability predictions and test labels
 step_dm1_error <- audio_test_labs - step_dm1_results
@@ -408,7 +408,7 @@ dance_tempo #negative quadratic shape
 This chart takes a very interesting appearance, with a clear quadratic interaction (as danceability peaks around medium-tempo). However the data has a large variance. Incorporating a quadratic `tempo` term in the `step_dm1` model improves Adj R^squared by 6.3%.
 
 ```{r}
-dm2 <- lm(danceability ~ duration_ms + explicit + energy + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence +  I(tempo^2)+ tempo+ time_signature + release_year, data=audio_trainMM)
+dm2 <- lm(danceability ~ duration_ms + explicit + energy + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + mode1 + speechiness + acousticness + instrumentalness + liveness + valence +  I(tempo^2)+ tempo+ time_signature + release_year, data=audio_trainMM)
 summary(dm2) #Adj R62 = 0.506
 
 summary(dm2)$adj.r.squared - step_dm1_test_r2 #.063
@@ -619,7 +619,7 @@ From the linear regression model, we can see that acousticness, energy, speechin
 
 Thus, a record label should make songs that include more of the variables with positive coefficients and reduce the variables that have negative coefficients. For example, it should release a song with more speechiness and acousticness in a minor scale, with less liveness to increase the likelihood of popularity of the song. 
 
-### Logisitc Regression
+### Logistic Regression
 
 A logistic regression model can also be used to gain insight into what makes a Taylor Swift song popular as well as predict the likelihood of popularity of Taylor Swift's future songs. 
 ```{r}
