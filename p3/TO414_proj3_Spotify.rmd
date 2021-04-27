@@ -31,7 +31,7 @@ set.seed(1234)
 spotify <- read.csv("data.csv")
 audio_features <- read.csv("tracks.csv")
 ```
-## Glossary of Varaibles
+## Glossary of Variables
 The spotify and audio features datasets contain a combination of objective and subjective musical attributes.
 
 Objective attributes of a musical track which are available in these datasets include:
@@ -87,18 +87,6 @@ table(spotify$hit_class)
 
 ```
 
-Audio Features
-```{r}
-audio_features$release_year <- substr(audio_features$release_date,1,4)
-audio_features$release_year <- as.numeric(audio_features$release_year)
-audio_features$key <- as.factor(audio_features$key)
-boxplot(audio_features$release_year, horizontal = T, main = "Year of Song Release")
-audio_features <- subset(audio_features, select = -c(id, name, popularity, artists, id_artists, release_date))
-```
-```{r}
-audio_features <- audio_features %>%
-  select(danceability,everything())   #bring `danceability` to first column
-```
 
 ## Test & Train
 Split spotify set into test and train sets to be used throughout
@@ -208,7 +196,6 @@ One qualifying factor is that music progression and change isn't discrete even t
 
 ```{r}
 
-library(C50)
 error_costs = matrix(c(0, 1, 2, 0), nrow = 2)
 eighties_dtm <- C5.0(as.factor(eighties) ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + mode + 
@@ -278,82 +265,291 @@ quantile(audio_features$danceability, probs = c(.7,.71,.72,.75))   #Score of 6.7
 ```
 
 
-### Train and Test Sets for Tracks
-Use same test indexes for the track dataset
+## Audio Features Data Preparation
+```{r}
+audio_features$release_year <- substr(audio_features$release_date,1,4)
+audio_features$release_year <- as.numeric(audio_features$release_year)
+audio_features$key <- as.factor(audio_features$key)
+audio_features$mode <- as.factor(audio_features$mode)
+boxplot(audio_features$release_year, horizontal = T, main = "Year of Song Release")
+audio_features <- subset(audio_features, select = -c(id, name, popularity, artists, id_artists, release_date))
+audio_features <- audio_features %>%
+  select(danceability,everything())   #bring `danceability` to first column
+```
+
+
+
+We remove music longer than 10 minutes from the data, to account for outliers.
+```{r}
+boxplot(audio_features$duration_ms, horizontal = T, col = "darkseagreen2", xlab = "Song Duration") #Extremely right-skewed, many large outliers
+summary(audio_features$duration_ms) #Summary shows the desired distribution, but boxplot does not
+quantile(audio_features$duration_ms, probs=seq(.9, 1, by = .005))
+audio_features$duration_ms <- ifelse(audio_features$duration_ms>598028, NA, audio_features$duration_ms) # Remove 1% longest-duration audio tracks (music longer than 10 minutes)
+boxplot(audio_features$duration_ms, horizontal = T, col = "darkseagreen2", xlab = "Song Duration (excluding top 1%)")  # Verify that extreme outliers have been eliminated
+
+audio_features<-na.omit(audio_features)  #Remove 5867 rows from data set
+```
+
+
+```{r}
+#Look at danceability distribution in `audio_features`
+boxplot(audio_features$danceability, horizontal=T, main="Danceability Distribution")
+quantile(audio_features$danceability, probs = c(.7,.71,.72,.75))   #Score of 6.7 falls at ~71st percentile
+
+boxplot(audio_features$loudness, horizontal=T, main="Loudness Distribution (in dB)")
+summary(audio_features$loudness)
+```
+
+
+### Train and Test
+First we will parse the `audio_featuresN` into a train and test set.
 __Train & Test Sets for the Danceability Prediction__
 ```{r}
-#audio_features
+# All-numeric set
+audio_featuresMM <- as.data.frame(model.matrix(~.-1,audio_features))  #all columns are numeric
+#audio_featuresN<- lapply(audio_featuresMM,normalize) #apply normalize() to all columns
+#audio_featuresN <- as.data.frame(audio_featuresN)  #This is a normalized set, if needed
+test_set <- sample(1:nrow(audio_features), 30000)
+
+#Train and Tests
 audio_train <- audio_features[-test_set,]
 audio_test <- audio_features[test_set,]
-#Response / Labels
+audio_trainMM <- audio_featuresMM[-test_set,]
+audio_testMM <- audio_featuresMM[test_set,]
+
+#Response Labels
 audio_train_labs <- audio_features[-test_set,"danceability"]
 audio_test_labs <- audio_features[test_set,"danceability"]
 ```
-## Linear Danceability Prediction
+
+
+
+
+```{r, eval=F}
+boxplot(audio_features$duration_ms, horizontal=T)
+boxplot(audio_featuresMM$duration_ms, horizontal=T)
+boxplot(audio_train$duration_ms, horizontal=T)
+boxplot(audio_train_shrunk$duration_ms, horizontal=T)
+```
+
+## Linear Danceability All-Effects Prediction Model
+
+We begin by generating an all-effects model using all available variables to predict `danceability`.
 ```{r dm1}
 dm1 <- lm(danceability ~ ., data = audio_train)
-summary(dm1)
+summary(dm1)  #Adj R^2 = 0.4422
 ```
-The adjusted r^2 is only .45, even though most of the explanatory variables appear to be highly significant. To get a better sense of the high error residuals, we can plot some residuals after removing any insignificant variables with the `step()` function.
-
-
-```{r dance_step, cache=T}
+The adjusted r^2 is only .443, even though nearly all of the explanatory variables appear to be highly significant. To get a better sense of the high error residuals, we can plot some residuals after removing any insignificant variables with the `step()` function.
+```{r}
 step_dm1 = step(dm1, type = "both") 
+summary(step_dm1)  #Adj R^2 = 0.4422, no improvement
 ```
-
 The `step` function leaves the following significant relation:
 
 `step_dm1`:
 danceability ~ duration_ms + explicit + energy + key0 + key1 + 
     key2 + key3 + key4 + key5 + key7 + key9 + key10 + loudness + 
-    mode + speechiness + acousticness + instrumentalness + liveness + 
+    mode1 + speechiness + acousticness + instrumentalness + liveness + 
     valence + tempo + time_signature + release_year
-    
 
+The large positive coefficients mark those elements such as `loudness`, `valence`, `explicit`, and `time_signature` that increase danceability.
+The large negative coefficients mark those elements such as `mode1`, `acousticness`, and `tempo` which appear to decrease a song's danceability. We note here that is seems suspicious that higher tempo is correlated to lower danceability, which will inspire the nonlinearity analysis in the subsequent section.
 
-How well does `step_dm1` predict danceability score?
-
-
+We can also look at the residual plot.
 ```{r}
 
-# Apply   step_dm1` to test set
-step_dm1_results <- predict(step_dm1,newdata = audio_test, type="response")
+plot(step_dm1) #Data is reasonably scattered, but there appears to be some interactions of nonlinear components
+
+```
+
+These plots provide a traditional method to interpret residual terms and determine whether there might be problems with our model. We do see that the data points are not scattered randomly around the regression line, suggesting the model is systematically mispredicting danceability. 
+
+__So, how well does `step_dm1` predict danceability score?__
+
+```{r}
+# Apply   `step_dm1` to test set
+step_dm1_results <- predict(step_dm1,newdata = audio_testMM, type="response")
 
 # Calculate errors between danceability predictions and test labels
 step_dm1_error <- audio_test_labs - step_dm1_results
-step_dm1_test_RMSE <- sqrt(mean(step_dm1_error^2))  # RSME = 0.126
-step_dm1_test_r2 <- R2(step_dm1_results,audio_test_labs,form="traditional")  #R^2 = 0.456
-step_dm1_test_MAE <- MAE(step_dm1_results,audio_test_labs) # MAE=0.101
-step_dm1_test_MSE <- mean((step_dm1_error)^2) #MSE = 0.016
+step_dm1_test_RMSE <- sqrt(mean(step_dm1_error^2))  # RSME = 0.12
+step_dm1_test_r2 <- summary(step_dm1)$adj.r.squared  #R^2 = 0.44
+step_dm1_test_MAE <- MAE(step_dm1_results,audio_test_labs) # MAE=0.099
+step_dm1_test_MSE <- mean((step_dm1_error)^2) #MSE = 0.015
 
-step_dm1_error_table <- matrix(c(step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,step_dm1_test_r2),ncol=4,byrow=T)
-colnames(step_dm1_error_table) <- c("MSE", "MAE", "RSME", "R-squared")
-rownames(step_dm1_error_table) <- c("step_dm1")
-step_dm1_error_table <- as.table(step_dm1_error_table)
+dm_error_table <- matrix(c(step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,step_dm1_test_r2),ncol=4,byrow=T)
+colnames(dm_error_table) <- c("MSE", "MAE", "RSME", "R-squared")
+rownames(dm_error_table) <- c("step_dm1")
+dm_error_table <- as.table(dm_error_table)
 
-step_dm1_error_table
+dm_error_table
 
-barplot(step_dm1_error_table[,c(1:3)],legend=F,beside=T,main='Summary Statistics for step_dm1 Prediction')   #Make legend=T after adding more regressions
+
 ```
-__Interpret the error metrics__
+The above error metrics describe how well `step_dm1` can fit the available explanatory variables to the `danceability` distribution. We will return to these numbers after making some attempts to improve the model fit.
 
 
-If we recall, Spotify included music elements such as musical elements including tempo, rhythm stability, beat strength, and overall regularity. Therefore, we would expect a very high correlation between corresponding available explanatory variables, such as `tempo`. Let's quantify the correlation between `tempo` and `danceability`.
+## Danceability Model Improvements with Nonlinearity and Interactions
+
+If we recall, Spotify included music elements such as musical elements including tempo, rhythm stability, beat strength, and overall regularity. Therefore, we would expect a very high correlation between corresponding available explanatory variables, such as `tempo`. Let's quantify the correlation between `tempo` and `danceability`. We will work with a slightly reduced data set to simplify visual interpretation.
 ```{r}
-dm2 <- ggplot(data=audio_train, aes(x=tempo, y=danceability)) + geom_point()
-dm2
+#Randomly take 100,000 rows into shrunken set
+audio_train_shrunk_rows <- sample(1:nrow(audio_train), 
+                              replace = F, 
+                              size = 50000) 
+audio_train_shrunk <- audio_train[audio_train_shrunk_rows, ]
+
+
+#Plot danceability vs tempo
+dance_tempo <- ggplot(data=audio_train_shrunk, aes(x=tempo, y=danceability)) + geom_point(size=1)
+dance_tempo #negative quadratic shape
+
 ```
-This chart takes a very interesting appearance, with a clear quadratic interaction (as danceability peaks around medium-tempo). However the data has a large variance.
+This chart takes a very interesting appearance, with a clear quadratic interaction (as danceability peaks around medium-tempo). However the data has a large variance. Incorporating a quadratic `tempo` term in the `step_dm1` model improves Adj R^squared by 6.3%.
+
+```{r}
+dm2 <- lm(danceability ~ duration_ms + explicit + energy + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence +  I(tempo^2)+ tempo+ time_signature + release_year, data=audio_trainMM)
+summary(dm2) #Adj R62 = 0.506
+
+summary(dm2)$adj.r.squared - step_dm1_test_r2 #.063
+
+```
+The negative co-efficient estimate for the quadratic tempo term `I(tempo^2)` of -.0000362 with high significance suggests that danceability score is highest for moderate tempos, with the score decreasing as tempo is adjusted very far in either direction. This is logical, since it is difficult to dance along to very slow-paced music or incredibly-charged-up music to which the dancer cannot keep up.
 
 
+We also investigate some possible interactions between pairings of explanatory variables. Note that many of these graphs are dense with high variation and unclear correlations. This is chiefly due to the great diversity in audio tracks housed by Spotify.
+```{r}
 
-plotting residuals
+#Check for nonlinearity
+gp1<-ggplot(data=audio_train_shrunk, aes(x=loudness, y=danceability)) + geom_point(size=1) #positive correlation
+gp2<-ggplot(data=audio_train_shrunk, aes(x=valence, y=danceability)) + geom_point(size=1) #positive correlation
+gp3<-ggplot(data=audio_train_shrunk, aes(x=release_year, y=danceability)) + geom_point(size=1) #unclear correlation
+gp4<-ggplot(data=audio_train_shrunk, aes(x=ifelse(duration_ms<500000,duration_ms,NA), y=danceability)) + geom_point(size=1) #unclear correlation, slightly negative
+gp5<-ggplot(data=audio_train_shrunk, aes(x=duration_ms, y=danceability)) + geom_point(size=1) #unclear correlation, slightly negative
+gp6<-ggplot(data=audio_train_shrunk, aes(x=key, y=danceability)) + geom_boxplot() #no trend
 
-#Consider interaction terms
-ex. speechiness & valence, tempo quadratic term
+gp1 + gp2 + gp3 + gp4 + gp5 + gp6
+  plot_layout(ncol = 3)
+
+#Check for Interactions
+gp7<-ggplot(data=audio_train_shrunk, aes(x=valence, y=energy)) + geom_point(size=1) # no clear trend, slight positive correlation
+gp8<-ggplot(data=audio_train_shrunk, aes(x=instrumentalness, y=tempo)) + geom_point(size=1) #greater tempo variance for lower instrumentalness
+gp9<-ggplot(data=audio_train_shrunk, aes(x=acousticness, y=speechiness)) + geom_point(size=1) # no clear trend
+gp10<-ggplot(data=audio_train_shrunk, aes(x=loudness, y=tempo)) + geom_point(size=1) #positive correlation
+gp11<-ggplot(data=audio_train_shrunk, aes(x=duration_ms, y=tempo)) + geom_point(size=1) #positive correlation
+gp12<-ggplot(data=audio_train_shrunk, aes(x=release_year, y=tempo)) + geom_point(size=1) #positive correlation
+
+gp7 + gp8 + gp9 + gp10 + gp11 + gp12
+  plot_layout(ncol = 3)
+
+```
+
+In the next chunk, we will perform several variations to improve the model correlation. These models are summarized in the table below.
+
+| Model      | R-Squared  |              Incorporation Since Previous                            | 
+|:-----------|:-----------|:--------------------------------------------------------------------:| 
+| dm1        |  44.3%     |              danceability ~ . in audio_train                         | 
+| step_dm1   |  44.3%     |               Removes some insignificant keys                        | 
+| dm2        |  50.6%     |               quadratic effect of tempo                              | 
+| dm3        |  51.0%     |               interactions: energy~valence                           | 
+| dm4        |  51.1%     |               interactions which yield minimal improvement           | 
+| dm5        |  51.2%     |              quadratic effect of energy                              | 
+| dm6        |  52.5%     |               quadratic effect of release_year                       | 
 
 
+Here are several model iterations which improve correlation by incorporating further quadratic and interaction terms.
+```{r}
 
+#Adj R^2 to beat: 0.5114 in `dm2`
+
+
+#energy~valence
+dm3 <- lm(danceability ~ duration_ms + explicit + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + mode1 + speechiness + acousticness + instrumentalness + liveness + valence +  tempo + I(tempo^2) + time_signature + release_year, data=audio_trainMM)
+summary(dm3)$adj.r.squared #Adj R^2 = 0.510
+
+#loudness*tempo and acousticness*instrumentalness and tempo*instrumentalness and speechiness~explicit and duration_ms*tempo
+dm4 <- lm(danceability ~ duration_ms + explicit + explicit*speechiness + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + loudness*tempo + mode1 + speechiness + acousticness + instrumentalness + acousticness*instrumentalness  + liveness + valence  +  tempo + I(tempo^2) + time_signature + tempo*instrumentalness + release_year, data=audio_trainMM)
+summary(dm4)$adj.r.squared #Adj R^2 = 0.511, very limited improvements from these interactions
+
+#I(energy^2)
+dm5 <- lm(danceability ~ duration_ms + explicit + explicit*speechiness + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + loudness*tempo + mode1 + speechiness + acousticness + instrumentalness + acousticness*instrumentalness  + liveness + valence + I(energy^2) +  tempo + I(tempo^2) + time_signature + tempo*instrumentalness+ duration_ms*tempo +  release_year, data=audio_trainMM)
+summary(dm5)$adj.r.squared #Adj R^2 = 0.512
+
+#I(release_year^2)
+dm6 <- lm(danceability ~ duration_ms + explicit + explicit*speechiness + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + loudness*tempo + mode1 + speechiness + acousticness + instrumentalness + acousticness*instrumentalness  + liveness + valence  +  tempo + I(tempo^2) + time_signature +I(energy^2)+ tempo*instrumentalness+ duration_ms*tempo +  I(release_year^2)+  release_year, data=audio_trainMM)
+summary(dm6)$adj.r.squared #Adj R^2 = 0.525
+#summary(dm6)  #Co-eff estimate of I(release_year^2) is 3.4e-05
+
+dm_error_table
+```
+The model iterations suggest Spotify considers music more suitable for dancing when it has a moderately-fast tempo and less-suitable for dancing when it has a slow or extremely-fast tempo. Spotify also considers very old and most new music more danceable, while "middle-aged" music (such as from the 60s) may be less-danceable.
+
+### Model Prediction Error Comparison
+Let's compare the prediction error by the models which improved correlation from the previous iteration by at least 1% (taking `step_dm1` as the base reference):
+
+* `step_dm1`
+* `dm2`
+* `dm6`
+
+
+```{r}
+
+# Apply   `dm2` to test set
+dm2_results <- predict(dm2,newdata = audio_testMM, type="response")
+# Calculate errors for dm2
+dm2_error <- audio_test_labs - dm2_results
+dm2_test_r2 <- summary(dm2)$adj.r.squared
+dm2_test_MSE <- mean((dm2_error)^2)
+dm2_test_MAE <- MAE(dm2_results,audio_test_labs)
+dm2_test_RMSE <- sqrt(mean(dm2_error^2))
+
+
+# Apply   `dm6` to test set
+dm6_results <- predict(dm6,newdata = audio_testMM, type="response")
+# Calculate errors for dm6
+dm6_error <- audio_test_labs - dm6_results
+dm6_test_r2 <- summary(dm6)$adj.r.squared
+dm6_test_MSE <- mean((dm6_error)^2)
+dm6_test_MAE <- MAE(dm6_results,audio_test_labs)
+dm6_test_RMSE <- sqrt(mean(dm6_error^2))
+
+
+#Build error table
+dm_error_table <- matrix(c(step_dm1_test_r2,step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,
+                           dm2_test_r2,dm2_test_MSE,dm2_test_MAE,dm2_test_RMSE,
+                           dm6_test_r2,dm6_test_MSE,dm6_test_MAE,dm6_test_RMSE),
+                         ncol=4,byrow=T)
+colnames(dm_error_table) <- c("R-squared","MSE", "MAE", "RSME")
+rownames(dm_error_table) <- c("step_dm1","dm2","dm6")
+
+dm_error_table <- as.table(dm_error_table)
+dm_error_table
+
+barplot(dm_error_table,legend=T,beside=T,main='Performance Statistics for Danceability Prediction Models')  
+
+```
+As correlation is improved with subsequent models, the error statistics are reduced correspondingly, signalling that the latter models achieve greater accuracy in their predictions. The greater prediction accuracy confirms that tempo and release year have a significant quadratic effect on Spotify's danceability score, while energy and valence exhibit slight interactions in the calculation of danceability.
+
+
+## Danceability Modelling Insights
+The Danceability prediction analysis offered some insight into musical elements which Spotify considers to contribute to higher versus lower "danceability." We summarize them here.
+\n
+
+Attributes of More Danceable Music:
+* loud
+* cheerful
+* explicit
+* speechy
+* time signature of 4
+* moderately high tempo
+
+Attributes of Less Danceable Music:
+* major key
+* acoustic
+* slow or superfast tempo
+* middle-aged
+
+Of course, Not all of these correlations ensure causation. For example, major-key music is unlikely to be a determinant of poor danceability. In addition, we discussed in the limitations section that `danceability` score is not necessarily equal to the average listener's perceived song danceability.
 # Popularity Prediction
 ## What Makes a Song Popular?
 Though the artist or record label may be a driving factor in the popularity of a song, predicting popularity based on song attributes alone could be very valuable information for an artist, someone who works for an artist, or a music streaming service. To find the tendencies of the most popular songs and try to see if we can classify them, we broke the data set into 2 classes: "mega-hit", a song in the top 10% of popularity on Spotify, and all other songs. Popularity of songs is never guaranteed even with multi-million dollar marketing budgets for popular artists, so any insight into what interior attributes make a song popular can be a strategic advantage. 
