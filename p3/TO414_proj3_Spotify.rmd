@@ -31,7 +31,7 @@ set.seed(1234)
 spotify <- read.csv("data.csv")
 audio_features <- read.csv("tracks.csv")
 ```
-## Glossary of Varaibles
+## Glossary of Variables
 The spotify and audio features datasets contain a combination of objective and subjective musical attributes.
 
 Objective attributes of a musical track which are available in these datasets include:
@@ -87,18 +87,6 @@ table(spotify$hit_class)
 
 ```
 
-Audio Features
-```{r}
-audio_features$release_year <- substr(audio_features$release_date,1,4)
-audio_features$release_year <- as.numeric(audio_features$release_year)
-audio_features$key <- as.factor(audio_features$key)
-boxplot(audio_features$release_year, horizontal = T, main = "Year of Song Release")
-audio_features <- subset(audio_features, select = -c(id, name, popularity, artists, id_artists, release_date))
-```
-```{r}
-audio_features <- audio_features %>%
-  select(danceability,everything())   #bring `danceability` to first column
-```
 
 ## Test & Train
 Split spotify set into test and train sets to be used throughout
@@ -126,24 +114,21 @@ ggplot(spotify, aes(x = decades, y = tempo, fill=decades)) +
 ggplot(spotify, aes(x = decades, y = danceability, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
-There is a trend in these graphs where the features start out at a certain point in the 20s and then drop down in the 30s-50s, and then increase rather steadily. Our team theorized that this may be due to the Great Depression and prohibition happening at the beginning of the 30s that caused this turn in culture.
+
+The previous graphs show a trend where the audio features start out at a certain point in the 20s and then drop down in the 30s-50s, and then increase rather steadily. Our team theorized that this may be due to the Great Depression and prohibition happening at the beginning of the 30s that caused this turn in culture.
 
 ```{r}
 ggplot(spotify, aes(x = decades, y = explicit, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
+
 We were surprised at the graph showing the trends in explicitness because they varied so much and the average seems to be really high for the 20s. We think this is because there is a much smaller number of songs from the 20s in this data set. It dropped off to almost 0 in the 60s and 70s, and then shot up with the prevalence of rock and hip hop.
 ```{r}
 ggplot(spotify, aes(x = decades, y = loudness, fill=decades)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
-Finally, we looked at the loudness. 
-```{r}
-summary(spotify)
-quantile(spotify$popularity, probs=seq(.1, .9, by = .1))
-spotify$hit_class <- ifelse(spotify$popularity >= 56, "mega-hit", ifelse(spotify$popularity > 42, "hit", "not hit"))
-spotify$hit_class <- as.factor(spotify$hit_class)
-```
+
+Finally, we looked at the loudness. It is expected to see that loudness increases as time goes on and technology improves, but it was interesting that in 2010s and 2020s it has been getting a little quieter. This may be due to increased health concerns. For example, iPhones will warn you if you are listening to music too loud for too long, and has settings that allow you to limit your volume when you are wearing headphones so you don't damage your ears. 
 
 ## By Popularity
 Next, we wanted to see how the audio features differ across our three classes of popularity: not a hit, hit, and mega hit.
@@ -153,21 +138,21 @@ ggplot(spotify, aes(x = hit_class, y = danceability, fill=hit_class)) +
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = explicit, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = tempo, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
+
+ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean")
 ```
 
-In the previous graphs, we see that mega hit has the highest mean for danceability, energy, explicitness, and tempo. While there are other factors that determine popularity, such as artist recognition, we can see that high values in these factors is correlated with popularity.
+In the previous graphs, we see that mega hit has the highest mean for danceability, energy, explicitness, tempo, and loudness. While there are other factors that determine popularity, such as artist recognition, we can see that high values in these factors is correlated with popularity.
 
-In the following graphs, we see a similar trend but in the opposite direction. Mega hits have the lowest averages for acousticness, instrumentalness, liveness, mode, loudness, and valence. 
+In the following graphs, we see a similar trend but in the opposite direction. Mega hits have the lowest averages for acousticness, instrumentalness, liveness, mode, and valence. 
 
 ```{r}
-ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
+ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
-
-ggplot(spotify, aes(x = hit_class, y = loudness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
+ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
 ```
 
@@ -178,7 +163,10 @@ sort(table(spotify$artists), decreasing = TRUE)[1:20]
 
 
 # Decade Prediction
+Music is constantly changing forms and styles throughout the years, and often these changes mirror social and cultural changes within a society. In this section we will explore whether the decade a song was created can be accurately predicted by the style and form of the song. This can help us understand the differentiating factors and the relationships between musical decades. This can be used by recommendation algorithms on Youtube, Spotify, or other music streaming programs. It can be used to introduce listeners to new music from other time periods that may be similar in sounds or feeling to what the user already listens to. Many times music listerners just listen to their contemporaries, but there is plenty of music to explore from the past century. 
+
 ## Is the song from the 80s?
+
 ```{r}
 eighties_train <- subset(spotify_train, select = -c(artists, year, hit_class))
 eighties_test <- subset(spotify_test, select = -c(artists, year, hit_class))
@@ -202,13 +190,12 @@ eighties_pred_log <- ifelse(eighties_pred_log > .23, 1, 0)
 summary(eighties_pred_log)
 confusionMatrix(as.factor(eighties_pred_log), as.factor(eighties_test$eighties))
 ```
-First we constructed a Logistic Regression to predict whether a song was released in the 80s. The regression resulted in an accuracy of 83.93% and a Kappa value of .2623. The model has many false negatives and false positives and doesn't seem to do a great job distinguishing between 80s music and other decades. Our model suggests that 80s songs have less acousticness, more instrumentals, are more danceable, and have high energy. They also tend to have a faster tempo.
+First we constructed a Logistic Regression to predict whether a song was released in the 80s. The regression resulted in an accuracy of 83.93% and a Kappa value of .2623. The model has many false negatives and false positives and doesn't seem to do a great job distinguishing between 80s music and other decades. Our model suggests that 80s songs have less acousticness, more instrumentals, are more danceable, have high energy, and tend to have a faster tempo. This makes sense considering 80s music was the decade electronic dance music was introduced. 
 
-One qualifying factor is that music progression and change isn't discrete even though we are trying to classify music into discrete buckets. For example, a song released in 1979 is likely to sound like a song released in 1980 despite being from a different decade. Additionally, I made the threshold for the log odds value needed to be classified as a 80s song .23 because it maximized the Kappa value for the model. The lower threshold value makes sense because any given song is much more likely to not be from the 80s, so our model has trouble indicating with higher certainty that a song is from the 80s.
+One qualifying factor is that music progression and change isn't discrete even though we are trying to classify music into discrete buckets. For example, a song released in 1979 is likely to sound like a song released in 1980 despite being from a different decade. Additionally, I made the threshold for the log odds value required to be classified as an 80s song .23 because it maximized the Kappa value for the model. The lower threshold value makes sense because any given song is much more likely to not be from the 80s just because there are 9 other decades the song could be from. This causes our model to have trouble indicating with high certainty that a song is from the 80s.
 
 ```{r}
 
-library(C50)
 error_costs = matrix(c(0, 1, 2, 0), nrow = 2)
 eighties_dtm <- C5.0(as.factor(eighties) ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + mode + 
@@ -219,9 +206,9 @@ eighties_pred_dt <- predict(eighties_dtm, eighties_test)
 confusionMatrix(as.factor(eighties_pred_dt), as.factor(eighties_test$eighties))
 
 ```
-Our decision tree model performed slightly better than our logistc regression model. The decision tree has an accuracy of 85.69% and a Kappa value of .2643. Because there are many more non 80s songs than 80s, I added a cost matrix to encouraget the decision tree to minimize false negative responses.
+Our decision tree model performed slightly better than our logistc regression model. The decision tree has an accuracy of 85.69% and a Kappa value of .2643. Because there are many more non 80s songs than 80s, I added a cost matrix to encourage the decision tree to minimize false negative responses. Although this model did better, it loses the intepratability that the logistic regression models has. Because of this I think the logistic regression model is more valuable for our purposes.
 
-## Which decades are easiest to predict?
+## Classifying Songs into Every Decade
 ```{r}
 decade_dtm <- C5.0(decades ~ acousticness + danceability + duration_ms + energy + explicit + 
                       instrumentalness + liveness + loudness + 
@@ -231,17 +218,29 @@ decades_pred <- predict(decade_dtm, spotify_test, type = "class")
 summary(decades_pred)
 confusionMatrix(decades_pred, as.factor(spotify_test$decades))
 ```
-The decision tree performed decently well considering how many classes there are and the difficulties in predcting a song's release decade. The model has an accuracy of 34.75% and a Kappa value of .2724. Its interesting to look along the diagnol in the confusion matrix and see that for any given decade of music, the decision tree model predicted the correct decade more than any other individual decade. This indicated that the model is catching onto the trends and differences in music by decade. 
+The decision tree performed decently well considering how many classes there are and the difficulties in predicting a song's release decade. The model has an accuracy of 34.75% and a Kappa value of .2724. Its interesting to look along the diagonal in the confusion matrix and see that for any given decade of music, the decision tree model predicted the correct decade more than any other individual decade except for 2000s music. This indicated that the model is catching onto the trends and differences in music by decade. 
 
-It's also interesting to look at how the decision tree is more likely to mistake a songs decade with an adjacent decade than one further away in time. 
+It's also interesting to look at how the decision tree is more likely to mistake a song's decade with an adjacent decade than one further away in time. 
 ```{r}
 fifties_preds <- c(124, 298, 598, 1121, 579, 236, 131, 153, 63, 153, 19)
 
 barplot(fifties_preds, main="Decision Tree Predictions for Songs made in the 50s",
-        xlab="Predicted Decade", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"))
+        xlab="Predicted Decade", ylab="Number of Times Classified", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"), col=rgb(.2, .4, .6, .6))
 ```
 
-For example, for all 50s songs, our model accurately predicted 1121 of them. One decade away from the 50s is the 40s and 60s, which recieved 598 and 579 predictions respectively. The general trend is the further away in time a decade is from a songs true decade, the less likely our model is to incorrectly classify it into that decade. this relates back to my comments above about change in music not being discrete but continuous. Songs from the 50s and 60s will sound  more alike than songs from the 50s and 90s, and our model is picking up on that. There are many similarities between the musical decades, and music waves and changes don't necessarily line up with the end of a decade and the start of a new one. That's why its interestign to see and interpret our models results in a histogram rather than just as a binary correct or incorrect prediction.
+For example, for all 50s songs, our model accurately predicted 1121 of them. One decade away from the 50s is the 40s and 60s, which recieved 598 and 579 predictions respectively. The general trend is the further away in time a decade is from a songs true decade, the less likely our model is to incorrectly classify it into that decade. This relates back to my comments above about change in music not being discrete but continuous. Songs from the 50s and 60s will sound  more alike than songs from the 50s and 90s, and our model is picking up on that. There are many similarities between the musical decades, and music waves don't necessarily line up with the end of a decade and the start of a new one. That's why its interesting to see and interpret our models results in a bar graph of all classifications rather than just as a binary correct or incorrect prediction. Suprisingly, our plot above shows a small bump in 2010s. This could indicate that 2010 music has some similarities to 1950s music, or at least more similarities than the 2000s and 2020s do to the 1950s. This is an example where Spotify can recommend some 50s music to someone who listens to a lot of music from the 2010s.
+
+
+We can look at songs released in the 2000s and see how the decision tree struggled with predicting 2000s songs accurately. The model often mistook 2000s songs for other decades' songs. This leads me to believe that the 2000s didn't have a defining sound to their music and was a combination of many other decades' sounds.
+```{r}
+two_thous_preds <- c(8, 21, 50, 94, 145, 224, 230, 390, 513, 538, 68)
+
+barplot(two_thous_preds, main="Decision Tree Predictions for Songs made in the 2000s",
+        xlab="Predicted Decade",  ylab="Number of Times Classified", names.arg=c("20s", "30s", "40s", "50s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"), col=rgb(.2, .4, .6, .6))
+```
+
+A possible prediction is that the 2000s was a transitional period for music. On the way out was 90s music and on the way in was 2010's music style. This can be substantiated by the high classifications of 2000s music into the 90s and 2010s. In fact, for all 2000s music, 538 songs were wrongly predicted to be from the 2010s and only 513 songs were accurately predicted as the 2000s.This sort of information can be valuable to a recommendation system because it suggests that someone who listens to 2000s music doesn't have a specifically unique taste and might like variety in their music choices. This can be compared to someone who listens to 50s music, which our model suggests is more differentiated from other decades' music, and might not like as much variety in their music.
+
 
 # Danceability Prediction
 
@@ -266,82 +265,291 @@ quantile(audio_features$danceability, probs = c(.7,.71,.72,.75))   #Score of 6.7
 ```
 
 
-### Train and Test Sets for Tracks
-Use same test indexes for the track dataset
+## Audio Features Data Preparation
+```{r}
+audio_features$release_year <- substr(audio_features$release_date,1,4)
+audio_features$release_year <- as.numeric(audio_features$release_year)
+audio_features$key <- as.factor(audio_features$key)
+audio_features$mode <- as.factor(audio_features$mode)
+boxplot(audio_features$release_year, horizontal = T, main = "Year of Song Release")
+audio_features <- subset(audio_features, select = -c(id, name, popularity, artists, id_artists, release_date))
+audio_features <- audio_features %>%
+  select(danceability,everything())   #bring `danceability` to first column
+```
+
+
+
+We remove music longer than 10 minutes from the data, to account for outliers.
+```{r}
+boxplot(audio_features$duration_ms, horizontal = T, col = "darkseagreen2", xlab = "Song Duration") #Extremely right-skewed, many large outliers
+summary(audio_features$duration_ms) #Summary shows the desired distribution, but boxplot does not
+quantile(audio_features$duration_ms, probs=seq(.9, 1, by = .005))
+audio_features$duration_ms <- ifelse(audio_features$duration_ms>598028, NA, audio_features$duration_ms) # Remove 1% longest-duration audio tracks (music longer than 10 minutes)
+boxplot(audio_features$duration_ms, horizontal = T, col = "darkseagreen2", xlab = "Song Duration (excluding top 1%)")  # Verify that extreme outliers have been eliminated
+
+audio_features<-na.omit(audio_features)  #Remove 5867 rows from data set
+```
+
+
+```{r}
+#Look at danceability distribution in `audio_features`
+boxplot(audio_features$danceability, horizontal=T, main="Danceability Distribution")
+quantile(audio_features$danceability, probs = c(.7,.71,.72,.75))   #Score of 6.7 falls at ~71st percentile
+
+boxplot(audio_features$loudness, horizontal=T, main="Loudness Distribution (in dB)")
+summary(audio_features$loudness)
+```
+
+
+### Train and Test
+First we will parse the `audio_featuresN` into a train and test set.
 __Train & Test Sets for the Danceability Prediction__
 ```{r}
-#audio_features
+# All-numeric set
+audio_featuresMM <- as.data.frame(model.matrix(~.-1,audio_features))  #all columns are numeric
+#audio_featuresN<- lapply(audio_featuresMM,normalize) #apply normalize() to all columns
+#audio_featuresN <- as.data.frame(audio_featuresN)  #This is a normalized set, if needed
+test_set <- sample(1:nrow(audio_features), 30000)
+
+#Train and Tests
 audio_train <- audio_features[-test_set,]
 audio_test <- audio_features[test_set,]
-#Response / Labels
+audio_trainMM <- audio_featuresMM[-test_set,]
+audio_testMM <- audio_featuresMM[test_set,]
+
+#Response Labels
 audio_train_labs <- audio_features[-test_set,"danceability"]
 audio_test_labs <- audio_features[test_set,"danceability"]
 ```
-## Linear Danceability Prediction
+
+
+
+
+```{r, eval=F}
+boxplot(audio_features$duration_ms, horizontal=T)
+boxplot(audio_featuresMM$duration_ms, horizontal=T)
+boxplot(audio_train$duration_ms, horizontal=T)
+boxplot(audio_train_shrunk$duration_ms, horizontal=T)
+```
+
+## Linear Danceability All-Effects Prediction Model
+
+We begin by generating an all-effects model using all available variables to predict `danceability`.
 ```{r dm1}
 dm1 <- lm(danceability ~ ., data = audio_train)
-summary(dm1)
+summary(dm1)  #Adj R^2 = 0.4422
 ```
-The adjusted r^2 is only .45, even though most of the explanatory variables appear to be highly significant. To get a better sense of the high error residuals, we can plot some residuals after removing any insignificant variables with the `step()` function.
-
-
-```{r dance_step, cache=T}
+The adjusted r^2 is only .443, even though nearly all of the explanatory variables appear to be highly significant. To get a better sense of the high error residuals, we can plot some residuals after removing any insignificant variables with the `step()` function.
+```{r}
 step_dm1 = step(dm1, type = "both") 
+summary(step_dm1)  #Adj R^2 = 0.4422, no improvement
 ```
-
 The `step` function leaves the following significant relation:
 
 `step_dm1`:
 danceability ~ duration_ms + explicit + energy + key0 + key1 + 
     key2 + key3 + key4 + key5 + key7 + key9 + key10 + loudness + 
-    mode + speechiness + acousticness + instrumentalness + liveness + 
+    mode1 + speechiness + acousticness + instrumentalness + liveness + 
     valence + tempo + time_signature + release_year
-    
 
+The large positive coefficients mark those elements such as `loudness`, `valence`, `explicit`, and `time_signature` that increase danceability.
+The large negative coefficients mark those elements such as `mode1`, `acousticness`, and `tempo` which appear to decrease a song's danceability. We note here that is seems suspicious that higher tempo is correlated to lower danceability, which will inspire the nonlinearity analysis in the subsequent section.
 
-How well does `step_dm1` predict danceability score?
-
-
+We can also look at the residual plot.
 ```{r}
 
-# Apply   step_dm1` to test set
-step_dm1_results <- predict(step_dm1,newdata = audio_test, type="response")
+plot(step_dm1) #Data is reasonably scattered, but there appears to be some interactions of nonlinear components
+
+```
+
+These plots provide a traditional method to interpret residual terms and determine whether there might be problems with our model. We do see that the data points are not scattered randomly around the regression line, suggesting the model is systematically mispredicting danceability. 
+
+__So, how well does `step_dm1` predict danceability score?__
+
+```{r}
+# Apply   `step_dm1` to test set
+step_dm1_results <- predict(step_dm1,newdata = audio_testMM, type="response")
 
 # Calculate errors between danceability predictions and test labels
 step_dm1_error <- audio_test_labs - step_dm1_results
-step_dm1_test_RMSE <- sqrt(mean(step_dm1_error^2))  # RSME = 0.126
-step_dm1_test_r2 <- R2(step_dm1_results,audio_test_labs,form="traditional")  #R^2 = 0.456
-step_dm1_test_MAE <- MAE(step_dm1_results,audio_test_labs) # MAE=0.101
-step_dm1_test_MSE <- mean((step_dm1_error)^2) #MSE = 0.016
+step_dm1_test_RMSE <- sqrt(mean(step_dm1_error^2))  # RSME = 0.12
+step_dm1_test_r2 <- summary(step_dm1)$adj.r.squared  #R^2 = 0.44
+step_dm1_test_MAE <- MAE(step_dm1_results,audio_test_labs) # MAE=0.099
+step_dm1_test_MSE <- mean((step_dm1_error)^2) #MSE = 0.015
 
-step_dm1_error_table <- matrix(c(step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,step_dm1_test_r2),ncol=4,byrow=T)
-colnames(step_dm1_error_table) <- c("MSE", "MAE", "RSME", "R-squared")
-rownames(step_dm1_error_table) <- c("step_dm1")
-step_dm1_error_table <- as.table(step_dm1_error_table)
+dm_error_table <- matrix(c(step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,step_dm1_test_r2),ncol=4,byrow=T)
+colnames(dm_error_table) <- c("MSE", "MAE", "RSME", "R-squared")
+rownames(dm_error_table) <- c("step_dm1")
+dm_error_table <- as.table(dm_error_table)
 
-step_dm1_error_table
+dm_error_table
 
-barplot(step_dm1_error_table[,c(1:3)],legend=F,beside=T,main='Summary Statistics for step_dm1 Prediction')   #Make legend=T after adding more regressions
+
 ```
-__Interpret the error metrics__
+The above error metrics describe how well `step_dm1` can fit the available explanatory variables to the `danceability` distribution. We will return to these numbers after making some attempts to improve the model fit.
 
 
-If we recall, Spotify included music elements such as musical elements including tempo, rhythm stability, beat strength, and overall regularity. Therefore, we would expect a very high correlation between corresponding available explanatory variables, such as `tempo`. Let's quantify the correlation between `tempo` and `danceability`.
+## Danceability Model Improvements with Nonlinearity and Interactions
+
+If we recall, Spotify included music elements such as musical elements including tempo, rhythm stability, beat strength, and overall regularity. Therefore, we would expect a very high correlation between corresponding available explanatory variables, such as `tempo`. Let's quantify the correlation between `tempo` and `danceability`. We will work with a slightly reduced data set to simplify visual interpretation.
 ```{r}
-dm2 <- ggplot(data=audio_train, aes(x=tempo, y=danceability)) + geom_point()
-dm2
+#Randomly take 100,000 rows into shrunken set
+audio_train_shrunk_rows <- sample(1:nrow(audio_train), 
+                              replace = F, 
+                              size = 50000) 
+audio_train_shrunk <- audio_train[audio_train_shrunk_rows, ]
+
+
+#Plot danceability vs tempo
+dance_tempo <- ggplot(data=audio_train_shrunk, aes(x=tempo, y=danceability)) + geom_point(size=1)
+dance_tempo #negative quadratic shape
+
 ```
-This chart takes a very interesting appearance, with a clear quadratic interaction (as danceability peaks around medium-tempo). However the data has a large variance.
+This chart takes a very interesting appearance, with a clear quadratic interaction (as danceability peaks around medium-tempo). However the data has a large variance. Incorporating a quadratic `tempo` term in the `step_dm1` model improves Adj R^squared by 6.3%.
+
+```{r}
+dm2 <- lm(danceability ~ duration_ms + explicit + energy + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + mode + speechiness + acousticness + instrumentalness + liveness + valence +  I(tempo^2)+ tempo+ time_signature + release_year, data=audio_trainMM)
+summary(dm2) #Adj R62 = 0.506
+
+summary(dm2)$adj.r.squared - step_dm1_test_r2 #.063
+
+```
+The negative co-efficient estimate for the quadratic tempo term `I(tempo^2)` of -.0000362 with high significance suggests that danceability score is highest for moderate tempos, with the score decreasing as tempo is adjusted very far in either direction. This is logical, since it is difficult to dance along to very slow-paced music or incredibly-charged-up music to which the dancer cannot keep up.
 
 
+We also investigate some possible interactions between pairings of explanatory variables. Note that many of these graphs are dense with high variation and unclear correlations. This is chiefly due to the great diversity in audio tracks housed by Spotify.
+```{r}
 
-plotting residuals
+#Check for nonlinearity
+gp1<-ggplot(data=audio_train_shrunk, aes(x=loudness, y=danceability)) + geom_point(size=1) #positive correlation
+gp2<-ggplot(data=audio_train_shrunk, aes(x=valence, y=danceability)) + geom_point(size=1) #positive correlation
+gp3<-ggplot(data=audio_train_shrunk, aes(x=release_year, y=danceability)) + geom_point(size=1) #unclear correlation
+gp4<-ggplot(data=audio_train_shrunk, aes(x=ifelse(duration_ms<500000,duration_ms,NA), y=danceability)) + geom_point(size=1) #unclear correlation, slightly negative
+gp5<-ggplot(data=audio_train_shrunk, aes(x=duration_ms, y=danceability)) + geom_point(size=1) #unclear correlation, slightly negative
+gp6<-ggplot(data=audio_train_shrunk, aes(x=key, y=danceability)) + geom_boxplot() #no trend
 
-#Consider interaction terms
-ex. speechiness & valence, tempo quadratic term
+gp1 + gp2 + gp3 + gp4 + gp5 + gp6
+  plot_layout(ncol = 3)
+
+#Check for Interactions
+gp7<-ggplot(data=audio_train_shrunk, aes(x=valence, y=energy)) + geom_point(size=1) # no clear trend, slight positive correlation
+gp8<-ggplot(data=audio_train_shrunk, aes(x=instrumentalness, y=tempo)) + geom_point(size=1) #greater tempo variance for lower instrumentalness
+gp9<-ggplot(data=audio_train_shrunk, aes(x=acousticness, y=speechiness)) + geom_point(size=1) # no clear trend
+gp10<-ggplot(data=audio_train_shrunk, aes(x=loudness, y=tempo)) + geom_point(size=1) #positive correlation
+gp11<-ggplot(data=audio_train_shrunk, aes(x=duration_ms, y=tempo)) + geom_point(size=1) #positive correlation
+gp12<-ggplot(data=audio_train_shrunk, aes(x=release_year, y=tempo)) + geom_point(size=1) #positive correlation
+
+gp7 + gp8 + gp9 + gp10 + gp11 + gp12
+  plot_layout(ncol = 3)
+
+```
+
+In the next chunk, we will perform several variations to improve the model correlation. These models are summarized in the table below.
+
+| Model      | R-Squared  |              Incorporation Since Previous                            | 
+|:-----------|:-----------|:--------------------------------------------------------------------:| 
+| dm1        |  44.3%     |              danceability ~ . in audio_train                         | 
+| step_dm1   |  44.3%     |               Removes some insignificant keys                        | 
+| dm2        |  50.6%     |               quadratic effect of tempo                              | 
+| dm3        |  51.0%     |               interactions: energy~valence                           | 
+| dm4        |  51.1%     |               interactions which yield minimal improvement           | 
+| dm5        |  51.2%     |              quadratic effect of energy                              | 
+| dm6        |  52.5%     |               quadratic effect of release_year                       | 
 
 
+Here are several model iterations which improve correlation by incorporating further quadratic and interaction terms.
+```{r}
 
+#Adj R^2 to beat: 0.5114 in `dm2`
+
+
+#energy~valence
+dm3 <- lm(danceability ~ duration_ms + explicit + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + mode1 + speechiness + acousticness + instrumentalness + liveness + valence +  tempo + I(tempo^2) + time_signature + release_year, data=audio_trainMM)
+summary(dm3)$adj.r.squared #Adj R^2 = 0.510
+
+#loudness*tempo and acousticness*instrumentalness and tempo*instrumentalness and speechiness~explicit and duration_ms*tempo
+dm4 <- lm(danceability ~ duration_ms + explicit + explicit*speechiness + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + loudness*tempo + mode1 + speechiness + acousticness + instrumentalness + acousticness*instrumentalness  + liveness + valence  +  tempo + I(tempo^2) + time_signature + tempo*instrumentalness + release_year, data=audio_trainMM)
+summary(dm4)$adj.r.squared #Adj R^2 = 0.511, very limited improvements from these interactions
+
+#I(energy^2)
+dm5 <- lm(danceability ~ duration_ms + explicit + explicit*speechiness + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + loudness*tempo + mode1 + speechiness + acousticness + instrumentalness + acousticness*instrumentalness  + liveness + valence + I(energy^2) +  tempo + I(tempo^2) + time_signature + tempo*instrumentalness+ duration_ms*tempo +  release_year, data=audio_trainMM)
+summary(dm5)$adj.r.squared #Adj R^2 = 0.512
+
+#I(release_year^2)
+dm6 <- lm(danceability ~ duration_ms + explicit + explicit*speechiness + energy + energy*valence + key0 + key1 + key2 + key3 + key4 + key5 + key7 + key9 + loudness + loudness*tempo + mode1 + speechiness + acousticness + instrumentalness + acousticness*instrumentalness  + liveness + valence  +  tempo + I(tempo^2) + time_signature +I(energy^2)+ tempo*instrumentalness+ duration_ms*tempo +  I(release_year^2)+  release_year, data=audio_trainMM)
+summary(dm6)$adj.r.squared #Adj R^2 = 0.525
+#summary(dm6)  #Co-eff estimate of I(release_year^2) is 3.4e-05
+
+dm_error_table
+```
+The model iterations suggest Spotify considers music more suitable for dancing when it has a moderately-fast tempo and less-suitable for dancing when it has a slow or extremely-fast tempo. Spotify also considers very old and most new music more danceable, while "middle-aged" music (such as from the 60s) may be less-danceable.
+
+### Model Prediction Error Comparison
+Let's compare the prediction error by the models which improved correlation from the previous iteration by at least 1% (taking `step_dm1` as the base reference):
+
+* `step_dm1`
+* `dm2`
+* `dm6`
+
+
+```{r}
+
+# Apply   `dm2` to test set
+dm2_results <- predict(dm2,newdata = audio_testMM, type="response")
+# Calculate errors for dm2
+dm2_error <- audio_test_labs - dm2_results
+dm2_test_r2 <- summary(dm2)$adj.r.squared
+dm2_test_MSE <- mean((dm2_error)^2)
+dm2_test_MAE <- MAE(dm2_results,audio_test_labs)
+dm2_test_RMSE <- sqrt(mean(dm2_error^2))
+
+
+# Apply   `dm6` to test set
+dm6_results <- predict(dm6,newdata = audio_testMM, type="response")
+# Calculate errors for dm6
+dm6_error <- audio_test_labs - dm6_results
+dm6_test_r2 <- summary(dm6)$adj.r.squared
+dm6_test_MSE <- mean((dm6_error)^2)
+dm6_test_MAE <- MAE(dm6_results,audio_test_labs)
+dm6_test_RMSE <- sqrt(mean(dm6_error^2))
+
+
+#Build error table
+dm_error_table <- matrix(c(step_dm1_test_r2,step_dm1_test_MSE,step_dm1_test_MAE,step_dm1_test_RMSE,
+                           dm2_test_r2,dm2_test_MSE,dm2_test_MAE,dm2_test_RMSE,
+                           dm6_test_r2,dm6_test_MSE,dm6_test_MAE,dm6_test_RMSE),
+                         ncol=4,byrow=T)
+colnames(dm_error_table) <- c("R-squared","MSE", "MAE", "RSME")
+rownames(dm_error_table) <- c("step_dm1","dm2","dm6")
+
+dm_error_table <- as.table(dm_error_table)
+dm_error_table
+
+barplot(dm_error_table,legend=T,beside=T,main='Performance Statistics for Danceability Prediction Models')  
+
+```
+As correlation is improved with subsequent models, the error statistics are reduced correspondingly, signalling that the latter models achieve greater accuracy in their predictions. The greater prediction accuracy confirms that tempo and release year have a significant quadratic effect on Spotify's danceability score, while energy and valence exhibit slight interactions in the calculation of danceability.
+
+
+## Danceability Modelling Insights
+The Danceability prediction analysis offered some insight into musical elements which Spotify considers to contribute to higher versus lower "danceability." We summarize them here.
+\n
+
+Attributes of More Danceable Music:
+* loud
+* cheerful
+* explicit
+* speechy
+* time signature of 4
+* moderately high tempo
+
+Attributes of Less Danceable Music:
+* major key
+* acoustic
+* slow or superfast tempo
+* middle-aged
+
+Of course, Not all of these correlations ensure causation. For example, major-key music is unlikely to be a determinant of poor danceability. In addition, we discussed in the limitations section that `danceability` score is not necessarily equal to the average listener's perceived song danceability.
 # Popularity Prediction
 ## What Makes a Song Popular?
 Though the artist or record label may be a driving factor in the popularity of a song, predicting popularity based on song attributes alone could be very valuable information for an artist, someone who works for an artist, or a music streaming service. To find the tendencies of the most popular songs and try to see if we can classify them, we broke the data set into 2 classes: "mega-hit", a song in the top 10% of popularity on Spotify, and all other songs. Popularity of songs is never guaranteed even with multi-million dollar marketing budgets for popular artists, so any insight into what interior attributes make a song popular can be a strategic advantage. 
@@ -387,6 +595,110 @@ confusionMatrix(knn_model_pred, log_test_labels)
 ```
 
 The KNN model also faired decently well in classifying "mega-hit" songs, having a slightly lower accuracy than the log model at ~90%. Additionally the KNN was less willing to make a mega-hit classification, which is reasonable due to the significantly higher amount of non hits in the data set. The KNN still correctly classified 458/692 "mega-hit" classifications, about 66%. The model improved slightly by dropping K, the threshold for making a classification, to 1/4 of the square root of input rows, which is the typical starting point for a K value. Overall, the logistic model was more successful in completing the task we set out to accomplish in building these models: correctly predict which songs have the potential to become extremely popular. 
+
 ## Holding artist constant, what makes a song popular?
 
+The data we have can also be used to predict the popularity of future songs for certain artists. Let us build models to predict which of Taylor Swift's songs are likely to be popular and also understand what contributes to their popularity. This is important to Taylor Swift's record label (and her) as popular songs will generate more revenue due to more royalties. 
+
+```{r}
+#Selecting Taylor Swift songs
+ts_data <- spotify %>% filter(artists =="['Taylor Swift']")
+ts_data <- subset(ts_data, select = -c(binary_hit_class, hit_class, decades, artists, year))
+ts_data$mode <- as.factor(ts_data$mode)
+
+```
+
+### Linear Regression 
+First, a linear regression model will give insight into what improves or decreases the popularity of Taylor Swift's songs. 
+
+```{r}
+#Building Linear Regression model
+linear_model <- lm(popularity ~ acousticness + energy + explicit + key + liveness + loudness + mode + speechiness, data = ts_data)
+summary(linear_model)
+```
+From the linear regression model, we can see that acousticness, energy, speechiness, and explicit lyrics are significant and have positive coefficients, which means that they increase the likelihood of popularity of a song. On the other hand, mode, liveness, key4 (note E), key11 (note B), and loudness decrease the likelihood of popularity of the song because they are significant and have negative coefficients.  
+
+Thus, a record label should make songs that include more of the variables with positive coefficients and reduce the variables that have negative coefficients. For example, it should release a song with more speechiness and acousticness in a minor scale, with less liveness to increase the likelihood of popularity of the song. 
+
+### Logisitc Regression
+
+A logistic regression model can also be used to gain insight into what makes a Taylor Swift song popular as well as predict the likelihood of popularity of Taylor Swift's future songs. 
+```{r}
+
+str(ts_data)
+
+set.seed(12345)
+testrows <- sample(1:nrow(ts_data), 0.1*nrow(ts_data))
+
+
+
+ts_test <- ts_data[testrows,  ]
+ts_train <- ts_data[-testrows,  ]
+
+head(ts_test)
+
+ts_train_labels <- ts_data[-testrows, "popularity"]
+ts_test_labels <- ts_data[testrows, "popularity" ]
+
+popularity_threshold_ts <- 50
+ts_train$popularity_bin <-ts_train$popularity / 100
+
+ts_train$popularity_bin <- ifelse(ts_train$popularity > popularity_threshold_ts, 1, 0)
+ts_test$popularity_bin <- ts_test$popularity / 100
+
+mean(ts_test$popularity_bin)
+
+ts_test$popularity_bin <- ifelse(ts_test$popularity > popularity_threshold_ts, 1, 0)
+summary(as.factor(ts_test$popularity_bin))
+
+ts_train$popularity_bin <- as.factor(ts_train$popularity_bin)
+ts_test$popularity_bin <- as.factor(ts_test$popularity_bin)
+
+
+ts_data$popularity <- NULL
+ts_train$popularity <- NULL
+ts_test$popularity <- NULL
+str(ts_train)
+ts_log <- glm(popularity_bin ~ energy +  key + loudness, data = ts_train, family = "binomial")
+summary(ts_log)
+```
+From the logistic regression model, we see that energy, loudness, key1 (note C#) and key10 (note A#) contribute significantly to the popularity of Taylor Swift's songs. While songs that have higher energy increase the likelihood of popularity, songs that are louder and songs that have the major key as note C# or note A# reduce the likelihood of popularity. 
+
+Taylor Swift's record label can use this information to produce songs that have a higher degree of energy to increase the likelihood of popularity. They can reduce the loudness of future songs and make songs that do not have C# or A# as the major key to ensure that the future songs are popular. 
+
+
+```{r}
+ts_pred <- predict(ts_log, newdata = ts_test, type = "response")
+ts_pred <- ifelse(ts_pred >  popularity_threshold_ts/100, 1, 0)
+
+
+CrossTable(x = ts_pred, y = ts_test$popularity_bin, prop.chisq=FALSE)
+confusionMatrix(as.factor(ts_test$popularity_bin), as.factor(ts_pred))
+```
+
+Above is the confusion matrix for the predictions of the logistic regression model. The model had an accuracy of 85% and can be used to predict the likelihood of popularity of future Taylor Swift songs.
+
+
+### Decision Tree
+
+```{r}
+# Build model
+
+ts_train$popularity_bin <- as.factor(ts_train$popularity_bin)
+ts_test$popularity_bin <- as.factor(ts_test$popularity_bin)
+
+model <- C5.0(popularity_bin ~ valence + speechiness + liveness + instrumentalness + energy + duration_ms + danceability + acousticness + explicit, data = ts_train)
+
+
+# Get predictions
+test_predictions <- predict(model, newdata = ts_test)
+confusionMatrix(as.factor(ts_test$popularity_bin), as.factor(test_predictions))
+
+```
+Above is the confusion matrix for the Decision Tree model. It has an accuracy of 90% and thus this model can be used to better predict the popularity of Taylor Swift's future songs in comparison to the logistic regression model.  
+
+The record label can use the insights gained from the linear regression model and the logistic regression model to tailor the songs to increase the likelihood of popularity. However, since the decision tree model has better accuracy of (90% vs 85%), they can use that model to predict the likelihood of popularity of Taylor Swift's future songs. Using the models to release songs that are more likely to be popular will increase the royalties (i.e., revenue) generated by the songs.
+
 # Conclusion
+
+In conclusion, the decades exploration part of our report was an interesting dive into the similarities and differences between musical forms throughout the decades. Our model suggests that classifying whether a song is from a particular decade or not is difficult. This makes sense because musical waves can come and go in larger and shorter spans than a decade. When we ran a decision tree model and tried to classify songs into every decade, this hypothesis was substantiated due to the high number of misclassifications into adjacent decades (e.g. 40s and 60s are adjacent to the 50s). Through this decision tree model we were able to see which decades of music were particularly unique because they were classified more easily, and which decades were more free form or transitional decades because of their low accuracy
