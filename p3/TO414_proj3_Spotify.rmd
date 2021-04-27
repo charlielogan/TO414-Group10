@@ -10,13 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 # Objective
 
-Data: In this report, we are working with a Spotify dataset, which contains audio features of around 600k songs released in between 1922 and 2021.
+* Data: In this report, we are working with a Spotify dataset, which contains audio features of around 600k songs released in between 1922 and 2021.
 
-Intended Audience: Music producers, artists, advertisers
-Overarching Objective: Our goal is to better understand music consumption patterns and trends among popular songs through the years.
-Underlying Objective 1 (for music producers and artists): Recognize which aspects correlate to popularity and creating mega hits
-Underlying Objective 2 (for Spotify): Help create automatic classification in recommendation algorithms and creating playlists (based on decade for example).
-Underlying Objective 3 (for advertisers): Recognize what kind of music is most popular for advertisers to target intended audiences. 
+* Intended Audience: Music producers, artists, advertisers
+* Overarching Objective: Our goal is to better understand music consumption patterns and trends among popular songs through the years.
+* Underlying Objective 1 (for music producers and artists): Recognize which aspects correlate to popularity and creating mega hits
+* Underlying Objective 2 (for Spotify): Help create automatic classification in recommendation algorithms and creating playlists (based on decade for example).
+* Underlying Objective 3 (for advertisers): Recognize what kind of music is most popular for advertisers to target intended audiences. 
 
 1. Descriptive Analytics: How do audio features differ across decades? How do audio features differ by popularity? 
 2. Predictive Analytics: Can we predict danceability? Can we predict popularity? Can we predict if a song is from a particular decade? Can we find patterns among a single artist's most popular songs?
