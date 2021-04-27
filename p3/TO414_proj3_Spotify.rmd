@@ -715,10 +715,10 @@ However, it should be kept in mind that due to changing music trends, these mode
 # Conclusion
 Through our analysis of the Spotify dataset, we were able to create many models and predictions that lend themselves to business applications for different stakeholders. 
 
+## Decades Insights
+This section of our report was an interesting dive into the similarities and differences between musical forms throughout the decades. Our model suggests that classifying whether a song is from a particular decade or not is difficult. This makes sense because musical waves can come and go in larger and shorter spans than a decade. When we ran a decision tree model and tried to classify songs into every decade, this hypothesis was substantiated due to the high number of misclassifications into adjacent decades (e.g. 40s and 60s are adjacent to the 50s). Through this decision tree model we were able to see which decades of music were particularly unique because they were classified more easily, and which decades were more free form or transitional decades because of their low accuracy. These models can be used by Spotify itself to create automatic classification in recommendation algorithms and creating playlists.
 
-This section of our report was an interesting dive into the similarities and differences between musical forms throughout the decades. Our model suggests that classifying whether a song is from a particular decade or not is difficult. This makes sense because musical waves can come and go in larger and shorter spans than a decade. When we ran a decision tree model and tried to classify songs into every decade, this hypothesis was substantiated due to the high number of misclassifications into adjacent decades (e.g. 40s and 60s are adjacent to the 50s). Through this decision tree model we were able to see which decades of music were particularly unique because they were classified more easily, and which decades were more free form or transitional decades because of their low accuracy. 
-
-
+## Danceability Insights
 The Danceability prediction analysis offered some insight into musical elements which Spotify considers to contribute to higher versus lower "danceability." We summarize them here.
 \n
 
@@ -742,9 +742,12 @@ Attributes of Less Danceable Music:
 
 Of course, Not all of these correlations ensure causation. For example, major-key music is unlikely to be a determinant of poor danceability. In addition, we discussed in the limitations section that `danceability` score is not necessarily equal to the average listener's perceived song danceability.
 
-
+## Popularity Insights
 Assessing the overall popularity of a song could be a valuable tool for several of the stakeholders listed to begin our report, namely: artists, music producers, and music streaming service providers. An artist or a record label that is aiming to release a single song to build up excitement for an upcoming album might want to pick a song with attributes that are consistent with popular music through the years. Though artists should continue to experiment with music styles and set new trends, this is an example where estimating which songs of an existing album has the best chance to top the music charts and should be released early for promotion could be worthwhile. Finally, assessing widespread popularity is important for streaming providers like Spotify and Apple Music, who benefit from users spending more time listening to music on their apps. Premade playlists meant for large streaming numbers should have a lot of songs that have the potential to become popular, even if they are new or underappreciated before selecting. 
 
-The report also builds models to understand what makes a specific artist’s (Taylor Swift’s) songs popular. The models can also be used to predict the popularity of Taylor Swift’s future songs. This is invaluable for Taylor Swift’s record label because they can tailor future songs according to the model’s results to increase the likelihood of popularity and thus potentially increase royalties (revenue). 
+## Artist Insights 
+One of the limitations of the models we did on overall popularity, is that we only took into account the audio features that the dataset provided. In reality, there are many other things that go into the popularity of a song such as artist recognition, lyrics, marketing, awards, etc. In an attempt to better determine which audio features impact popularity, regardless of the artist, we tried to build models to understand what makes a specific artist’s (Taylor Swift’s) songs popular. The models can also be used to predict the popularity of Taylor Swift’s future songs. This is invaluable for Taylor Swift’s record label because they can tailor future songs according to the model’s results to increase the likelihood of popularity and thus potentially increase royalties (revenue). 
 
+
+Overall, this project provided us with many different insights on the audio features of songs, and the popularity and danceability scores that result. Given a specific stakeholder, such as music producers, artists, advertisers, music platform executives, etc., we are confident that we can provide them with significant business insights based on our models. 
 
