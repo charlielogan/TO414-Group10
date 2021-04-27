@@ -67,7 +67,6 @@ lapply(packages, require, character.only = TRUE)
 ```
 
 ## Data Manipulation
-Main Data
 ```{r}
 spotify <- subset(spotify, select = -c(id, name, release_date))
 spotify$artists <- as.factor(spotify$artists)
