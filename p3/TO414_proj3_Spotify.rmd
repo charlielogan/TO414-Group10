@@ -384,6 +384,107 @@ confusionMatrix(knn_model_pred, log_test_labels)
 ```
 
 The KNN model also faired decently well in classifying "mega-hit" songs, having a slightly lower accuracy than the log model at ~90%. Additionally the KNN was less willing to make a mega-hit classification, which is reasonable due to the significantly higher amount of non hits in the data set. The KNN still correctly classified 458/692 "mega-hit" classifications, about 66%. The model improved slightly by dropping K, the threshold for making a classification, to 1/4 of the square root of input rows, which is the typical starting point for a K value. Overall, the logistic model was more successful in completing the task we set out to accomplish in building these models: correctly predict which songs have the potential to become extremely popular. 
+
 ## Holding artist constant, what makes a song popular?
+
+The data we have can also be used to predict the popularity of future songs for certain artists. Let us build models to predict which of Taylor Swift's songs are likely to be popular and also understand what contributes to their popularity. This is important to Taylor Swift's record label (and her) as popular songs will generate more revenue due to more royalties. 
+
+```{r}
+#Selecting Taylor Swift songs
+ts_data <- spotify %>% filter(artists =="['Taylor Swift']")
+ts_data <- subset(ts_data, select = -c(binary_hit_class, hit_class, decades, artists, year))
+
+```
+
+### Linear Regression 
+First, a linear regression model will give insight into what improves or decreases the popularity of Taylor Swift's songs. 
+
+```{r}
+#Building Linear Regression model
+linear_model <- lm(popularity ~ acousticness + energy + explicit + key + liveness + loudness + mode + speechiness, data = ts_data)
+summary(linear_model)
+```
+From the linear regression model, we can see that acousticness, energy, speechiness, and explicit lyrics are significant and have positive coefficients, which means that they increase the likelihood of popularity of a song. On the other hand, mode, liveness, key4 (note E), key11 (note B), and loudness decrease the likelihood of popularity of the song because they are significant and have negative coefficients.  
+
+Thus, a record label should make songs that include more of the variables with positive coefficients and reduce the variables that have negative coefficients. For example, it should release a song with more speechiness and acousticness in a minor scale, with less liveness to increase the likelihood of popularity of the song. 
+
+### Logisitc Regression
+
+A logistic regression model can also be used to gain insight into what makes a Taylor Swift song popular as well as predict the likelihood of popularity of Taylor Swift's future songs. 
+```{r}
+
+str(ts_data)
+
+set.seed(12345)
+testrows <- sample(1:nrow(ts_data), 0.1*nrow(ts_data))
+
+
+
+ts_test <- ts_data[testrows,  ]
+ts_train <- ts_data[-testrows,  ]
+
+head(ts_test)
+
+ts_train_labels <- ts_data[-testrows, "popularity"]
+ts_test_labels <- ts_data[testrows, "popularity" ]
+
+popularity_threshold_ts <- 50
+ts_train$popularity_bin <-ts_train$popularity / 100
+
+ts_train$popularity_bin <- ifelse(ts_train$popularity > popularity_threshold_ts, 1, 0)
+ts_test$popularity_bin <- ts_test$popularity / 100
+
+mean(ts_test$popularity_bin)
+
+ts_test$popularity_bin <- ifelse(ts_test$popularity > popularity_threshold_ts, 1, 0)
+summary(as.factor(ts_test$popularity_bin))
+
+ts_train$popularity_bin <- as.factor(ts_train$popularity_bin)
+ts_test$popularity_bin <- as.factor(ts_test$popularity_bin)
+
+
+ts_data$popularity <- NULL
+ts_train$popularity <- NULL
+ts_test$popularity <- NULL
+str(ts_train)
+ts_log <- glm(popularity_bin ~ energy +  key + loudness, data = ts_train, family = "binomial")
+summary(ts_log)
+```
+From the logistic regression model, we see that energy, loudness, key1 (note C#) and key10 (note A#) contribute significantly to the popularity of Taylor Swift's songs. While songs that have higher energy increase the likelihood of popularity, songs that are louder and songs that have the major key as note C# or note A# reduce the likelihood of popularity. 
+
+Taylor Swift's record label can use this information to produce songs that have a higher degree of energy to increase the likelihood of popularity. They can reduce the loudness of future songs and make songs that do not have C# or A# as the major key to ensure that the future songs are popular. 
+
+
+```{r}
+ts_pred <- predict(ts_log, newdata = ts_test, type = "response")
+ts_pred <- ifelse(ts_pred >  popularity_threshold_ts/100, 1, 0)
+
+
+CrossTable(x = ts_pred, y = ts_test$popularity_bin, prop.chisq=FALSE)
+confusionMatrix(as.factor(ts_test$popularity_bin), as.factor(ts_pred))
+```
+
+Above is the confusion matrix for the predictions of the logistic regression model. The model had an accuracy of 85% and can be used to predict the likelihood of popularity of future Taylor Swift songs.
+
+
+### Decision Tree
+
+```{r}
+# Build model
+
+ts_train$popularity_bin <- as.factor(ts_train$popularity_bin)
+ts_test$popularity_bin <- as.factor(ts_test$popularity_bin)
+
+model <- C5.0(popularity_bin ~ valence + speechiness + liveness + instrumentalness + energy + duration_ms + danceability + acousticness + explicit, data = ts_train)
+
+
+# Get predictions
+test_predictions <- predict(model, newdata = ts_test)
+confusionMatrix(as.factor(ts_test$popularity_bin), as.factor(test_predictions))
+
+```
+Above is the confusion matrix for the Decision Tree model. It has an accuracy of 90% and thus this model can be used to better predict the popularity of Taylor Swift's future songs in comparison to the logistic regression model.  
+
+The record label can use the insights gained from the linear regression model and the logistic regression model to tailor the songs to increase the likelihood of popularity. However, since the decision tree model has better accuracy of (90% vs 85%), they can use that model to predict the likelihood of popularity of Taylor Swift's future songs. Using the models to release songs that are more likely to be popular will increase the royalties (i.e., revenue) generated by the songs.
 
 # Conclusion
