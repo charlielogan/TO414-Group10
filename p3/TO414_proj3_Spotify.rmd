@@ -10,16 +10,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 # Objective
 
-* Data: In this report, we are working with a Spotify dataset, which contains audio features of around 600k songs released in between 1922 and 2021.
+**Data:** In this report, we are working with a Spotify dataset, which contains audio features of around 600k songs released in between 1922 and 2021.
+**Intended Audience:** Music producers, artists, advertisers
 
-* Intended Audience: Music producers, artists, advertisers
-* Overarching Objective: Our goal is to better understand music consumption patterns and trends among popular songs through the years.
-* Underlying Objective 1 (for music producers and artists): Recognize which aspects correlate to popularity and creating mega hits
-* Underlying Objective 2 (for Spotify): Help create automatic classification in recommendation algorithms and creating playlists (based on decade for example).
-* Underlying Objective 3 (for advertisers): Recognize what kind of music is most popular for advertisers to target intended audiences. 
-
-1. Descriptive Analytics: How do audio features differ across decades? How do audio features differ by popularity? 
-2. Predictive Analytics: Can we predict danceability? Can we predict popularity? Can we predict if a song is from a particular decade? Can we find patterns among a single artist's most popular songs?
+* __Overarching Objective:__ Our goal is to better understand music consumption patterns and trends among popular songs through the years.
+  + Underlying Objective 1 (for music producers and artists): Recognize which aspects correlate to popularity and creating mega hits
+  + Underlying Objective 2 (for Spotify): Help create automatic classification in recommendation algorithms and creating playlists (based on decade for example).
+  + Underlying Objective 3 (for advertisers): Recognize what kind of music is most popular for advertisers to target intended audiences. 
+\n
+**Descriptive Analytics:** How do audio features differ across decades? How do audio features differ by popularity? 
+**Predictive Analytics:** Can we predict danceability? Can we predict popularity? Can we predict if a song is from a particular decade? Can we find patterns among a single artist's most popular songs?
 
 Finally, we will identify several applications for the insights presented in this analysis.
 
@@ -148,12 +148,13 @@ In the previous graphs, we see that mega hit has the highest mean for danceabili
 In the following graphs, we see a similar trend but in the opposite direction. Mega hits have the lowest averages for acousticness, instrumentalness, liveness, mode, and valence. 
 
 ```{r}
-ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + geom_bar(stat = "summary", fun = "mean")+ ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")+ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
+ggplot(spotify, aes(x = hit_class, y = acousticness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = instrumentalness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = liveness, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = mode, fill=hit_class)) + 
+  geom_bar(stat = "summary", fun = "mean") + ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
   geom_bar(stat = "summary", fun = "mean")
-ggplot(spotify, aes(x = hit_class, y = valence, fill=hit_class)) + 
-  geom_bar(stat = "summary", fun = "mean")
+    plot_layout(ncol = 2)
 ```
 
 Finally, we also wanted to look at the artists with the most songs in the dataset.
@@ -559,6 +560,7 @@ Attributes of Less Danceable Music:
 * middle-aged
 
 Of course, Not all of these correlations ensure causation. For example, major-key music is unlikely to be a determinant of poor danceability. In addition, we discussed in the limitations section that `danceability` score is not necessarily equal to the average listener's perceived song danceability.
+
 # Popularity Prediction
 ## What Makes a Song Popular?
 Though the artist or record label may be a driving factor in the popularity of a song, predicting popularity based on song attributes alone could be very valuable information for an artist, someone who works for an artist, or a music streaming service. To find the tendencies of the most popular songs and try to see if we can classify them, we broke the data set into 2 classes: "mega-hit", a song in the top 10% of popularity on Spotify, and all other songs. Popularity of songs is never guaranteed even with multi-million dollar marketing budgets for popular artists, so any insight into what interior attributes make a song popular can be a strategic advantage. 
@@ -713,7 +715,7 @@ The record label can use the insights gained from the linear regression model an
 However, it should be kept in mind that due to changing music trends, these models would require additional data in the future to make accurate predictions.
 
 # Conclusion
-Through our analysis of the Spotify dataset, we were able to create many models and predictions that lend themselves to business applications for different stakeholders. 
+In this analysis of the Spotify dataset, we were created many models and predictions that lend themselves to business applications for music industry stakeholders, including music producers, artists, and advertisers. 
 
 ## Decades Insights
 This section of our report was an interesting dive into the similarities and differences between musical forms throughout the decades. Our model suggests that classifying whether a song is from a particular decade or not is difficult. This makes sense because musical waves can come and go in larger and shorter spans than a decade. When we ran a decision tree model and tried to classify songs into every decade, this hypothesis was substantiated due to the high number of misclassifications into adjacent decades (e.g. 40s and 60s are adjacent to the 50s). Through this decision tree model we were able to see which decades of music were particularly unique because they were classified more easily, and which decades were more free form or transitional decades because of their low accuracy. These models can be used by Spotify itself to create automatic classification in recommendation algorithms and creating playlists.
@@ -749,5 +751,5 @@ Assessing the overall popularity of a song could be a valuable tool for several 
 One of the limitations of the models we did on overall popularity, is that we only took into account the audio features that the dataset provided. In reality, there are many other things that go into the popularity of a song such as artist recognition, lyrics, marketing, awards, etc. In an attempt to better determine which audio features impact popularity, regardless of the artist, we tried to build models to understand what makes a specific artist’s (Taylor Swift’s) songs popular. The models can also be used to predict the popularity of Taylor Swift’s future songs. This is invaluable for Taylor Swift’s record label because they can tailor future songs according to the model’s results to increase the likelihood of popularity and thus potentially increase royalties (revenue). 
 
 
-Overall, this project provided us with many different insights on the audio features of songs, and the popularity and danceability scores that result. Given a specific stakeholder, such as music producers, artists, advertisers, music platform executives, etc., we are confident that we can provide them with significant business insights based on our models. 
+Overall, this project provided us with many different insights on the audio features of songs and their corresponding danceability and popularity scores. Specific stakeholders such as music producers, artists, advertisers, and music platform executives can use this analysis to extract information about how music is consumed and experienced to meet the needs of their clients and/or audiences.
 
